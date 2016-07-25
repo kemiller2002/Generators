@@ -24,6 +24,45 @@ namespace DataAccessLayerWriter
                 );
         }
 
+
+        public Field GetCustomType(XmlNode node, XmlNamespaceManager manager)
+        {
+
+            /*
+             <Element Type="SqlUserDefinedDataType" Name="[dbo].[PhoneNumber]">
+			<Property Name="IsNullable" Value="False" />
+			<Property Name="Length" Value="10" />
+			<Relationship Name="Schema">
+				<Entry>
+					<References ExternalSource="BuiltIns" Name="[dbo]" />
+				</Entry>
+			</Relationship>
+			<Relationship Name="Type">
+				<Entry>
+					<References ExternalSource="BuiltIns" Name="[varchar]" />
+				</Entry>
+			</Relationship>
+		</Element>
+             
+             */
+            var allowsNull = Boolean.Parse(node.SelectSingleNode("d:Property[@Name='IsNullable']").Attributes["Value"].Value);
+            var lengthString = node.SelectSingleNode("d:Property[@Name='Length']")?.Attributes["Value"].Value;
+
+            int length;
+
+
+            var typeName = node.SelectSingleNode("d:Relationship[@Name='Type']/d:Entry/d:References").Attributes["Name"].Value;
+
+            return new Field
+            {
+                AllowsNull = allowsNull,
+                Length =  (int.TryParse(lengthString, out length)) ? (int?)length : null ,
+                Type = GetDataType(typeName)
+            };
+        }
+
+
+
         public bool Write(string inputFile, string outputFolder)
         {
             var archive = ZipFile.Open(inputFile ,System.IO.Compression.ZipArchiveMode.Read);
@@ -35,13 +74,13 @@ namespace DataAccessLayerWriter
 
                 var manager = new XmlNamespaceManager(document.NameTable);
                 manager.AddNamespace("d", document.DocumentElement.NamespaceURI);
-                var nodes = document.SelectNodes("d:DataSchemaModel/d:Model/d:Element", manager);
 
-                Console.WriteLine(nodes.Cast<XmlNode>().Where(n => n.Attributes["Type"].Value.Equals("SqlProcedure")).Count());
+                var nodes = document.SelectNodes("d:DataSchemaModel/d:Model/d:Element", manager);
 
                 var code = nodes.Cast<XmlNode>()
                      .Where(n => n.Attributes["Type"].Value.Equals("SqlProcedure"))
                      .Select(n => ParseProcedure(n, manager));
+
 
                 code.ToList().ForEach(i=>File.WriteAllText($"{outputFolder}{i.Item1}", i.Item2));
 
@@ -49,6 +88,11 @@ namespace DataAccessLayerWriter
 
             }
 
+        }
+
+        public String GetCustomTypeName(string name, XmlNode node, XmlNamespaceManager manager)
+        {
+            throw new NotImplementedException();
         }
 
         public Field CreateParameterEntry(XmlNode node, XmlNamespaceManager manager)
@@ -67,7 +111,7 @@ namespace DataAccessLayerWriter
             return new Field
             {
                 Name = name,
-                Type = LookupDataType(type),
+                Type = GetDataType(type),
                 AllowsNull = allowsNull
             };
         }
@@ -86,6 +130,8 @@ namespace DataAccessLayerWriter
             return new Tuple<string, string>($"{procedureNamespace}.{procedureName}.cs", 
                     ProcedureEntry.Create(procedureNamespace, procedureName, parameters));
         }
+
+        public Type GetDataType(string input) => Type.GetType($"System.{LookupDataType(input)}");
 
         public string LookupDataType(string input)
         {

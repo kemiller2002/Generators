@@ -14,26 +14,93 @@ namespace DataAccessLayerWriter
 
         static string CreateParameterEntry(Field parameter)
         {
-            return
-                $@"
+            if (parameter.AllowsNull)
+            {
+                if (parameter.Type.IsClass)
+                {
+                    return
+                        $@"
+                        if({parameter.Name} != null)
+                        {{
+                            var parameter = new SqlParameter
+                            {{
+                                Value = id,
+                                ParameterName = ""{parameter
+                            .Name}"",
+                            }};
+
+                            command.Parameters.Add(parameter);
+                        }}
+
+                    ";
+                }
+                else
+                {
+                    return
+                        $@"
             if ({parameter.Name}.HasValue)
             {{
-                {{
-                    var parameter = new SqlParameter
+                var parameter = new SqlParameter
                 {{
                     Value = id,
-                    ParameterName = ""{parameter.Name}"",
+                    ParameterName = ""{parameter
+                            .Name}"",
+                }};
+
+                command.Parameters.Add(parameter);
+                
+            }}";
+                }
+
+            }
+            else
+            {
+
+                if (parameter.Type.IsClass)
+                {
+                    return
+                        $@"
+                        if({parameter.Name} == null)
+                        {{
+                            throw new ArgumentException (""{parameter
+                            .Name} cannot be null"");
+                        }}
+                        
+                        var parameter = new SqlParameter
+                        {{
+                            Value = id,
+                            ParameterName = ""{parameter
+                                .Name}"",
+                        }};
+
+                        command.Parameters.Add(parameter);
+
+                    ";
+                }
+                else
+                {
+                    return
+                        $@"
+                var parameter = new SqlParameter
+                {{
+                    Value = id,
+                    ParameterName = ""{parameter
+                            .Name}"",
                 }};
 
                     command.Parameters.Add(parameter);
-                }}
-            }}";
+                ";
+                }
+
+
+
+            }
         }
 
         public static string ConvertToType(Field parameter)
         {
             var parameterType = Type.GetType($"System.{parameter.Type}");
-            var outputType = (parameter.AllowsNull && !parameterType.IsClass) ? $"{parameter.Type}?" : parameter.Name;
+            var outputType = (parameter.AllowsNull && !parameter.Type.IsClass) ? $"{parameter.Type.Name}?" : parameter.Name;
 
             return $"{outputType} {parameter.Name}";
         }
@@ -72,18 +139,6 @@ namespace {procedureNamespace}
             var command = new SqlCommand();
             command.Connection = _connection;
             command.CommandText = ""[{procedureNamespace}].[{name}]"";
-
-            /*if (id.HasValue)
-            {{
-                var parameter = new SqlParameter
-                {{
-                    Value = id,
-                    ParameterName = ""@id"",
-                }};
-
-                command.Parameters.Add(parameter);
-            }}*/
-
 
             {codeParameters}
 
