@@ -17,19 +17,16 @@ namespace DataAccessLayerWriter
     {
         static void Main(string[] args)
         {
-
             var writer = new Writer();
             writer.Write(
-                @"Z:\Users\kemiller2002\GitHub\StructuredSight\DacpacAnalysis\Database1\Database1\bin\Debug\Database1.dacpac",
+                @"C:\Repos\Generators\ExampleDatabase\bin\Debug\ExampleDatabase.dacpac",
                 "C:\\temp\\"
                 );
         }
 
         public bool Write(string inputFile, string outputFolder)
         {
-            var archive = ZipFile.Open(inputFile
-                ,
-                    System.IO.Compression.ZipArchiveMode.Read);
+            var archive = ZipFile.Open(inputFile ,System.IO.Compression.ZipArchiveMode.Read);
 
             using (var stream = archive.Entries.First(x => x.Name.Equals("model.xml")).Open())
             {
@@ -81,18 +78,18 @@ namespace DataAccessLayerWriter
             var nameAttributeValueParts = nameAttributeValue.Split('.');
 
             var procedureNamespace = nameAttributeValueParts[0].RemoveSquareBrackets();
-            var procedureName = nameAttributeValueParts[0].RemoveSquareBrackets();
+            var procedureName = nameAttributeValueParts[1].RemoveSquareBrackets();
 
             var parameters = node.SelectNodes("d:Relationship[@Name='Parameters']/d:Entry", manager)
                 .Cast<XmlNode>().Select(n => CreateParameterEntry(n, manager));
 
-            return new Tuple<string, string>($"{procedureNamespace}{procedureName}", 
+            return new Tuple<string, string>($"{procedureNamespace}.{procedureName}.cs", 
                     ProcedureEntry.Create(procedureNamespace, procedureName, parameters));
         }
 
         public string LookupDataType(string input)
         {
-           switch (input)  
+           switch (input.ToLowerInvariant())  
             {
                 case "bigint": return "Int64";
 
@@ -104,15 +101,13 @@ namespace DataAccessLayerWriter
 
                 case "date": return "DateTime";
 
-                case "Date": return "datetime";
-
                 case "datetime2": return "DateTime";
 
                 case "datetimeoffset": return "DateTimeOffset";
 
                 case "decimal": return "Decimal";
 
-                case "FILESTREAM": return "Byte[]";
+                case "filestream": return "Byte[]";
 
                 case "float": return "Double";
 

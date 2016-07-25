@@ -10,6 +10,9 @@ namespace DataAccessLayerWriter
     static class StringExtensions
     {
         public static string RemoveSquareBrackets(this string item)
-            => (item == null) ? null : item.Replace("[", "").Replace("]", "");
+            => item?.Replace("[", "").Replace("]", "");
+
+
+        public static string Join(this IEnumerable<string> items, string separator) => String.Join(separator, items);
     }
 }

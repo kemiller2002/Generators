@@ -22,7 +22,7 @@ namespace DataAccessLayerWriter
                     var parameter = new SqlParameter
                 {{
                     Value = id,
-                    ParameterName = ""@{parameter.Name}"",
+                    ParameterName = ""{parameter.Name}"",
                 }};
 
                     command.Parameters.Add(parameter);
@@ -30,14 +30,21 @@ namespace DataAccessLayerWriter
             }}";
         }
 
+        public static string ConvertToType(Field parameter)
+        {
+            var parameterType = Type.GetType($"System.{parameter.Type}");
+            var outputType = (parameter.AllowsNull && !parameterType.IsClass) ? $"{parameter.Type}?" : parameter.Name;
+
+            return $"{outputType} {parameter.Name}";
+        }
 
 
         public static string Create(string procedureNamespace, string name, IEnumerable<Field> parameters)
         {
 
-            var codeParameters = parameters.Select(CreateParameterEntry);
+            var parameterEntries = parameters.Select(ConvertToType).Join(", ");
 
-            var parameterEntry = String.Join(System.Environment.NewLine, codeParameters);
+            var codeParameters = parameters.Select(CreateParameterEntry).Join(System.Environment.NewLine);
 
             return $@"
 using System.Collections.Generic;
@@ -60,11 +67,11 @@ namespace {procedureNamespace}
             _connection = connection;
         }}
 
-        public IEnumerable<dynamic> Execute(int? id)
+        public IEnumerable<dynamic> Execute({parameterEntries})
         {{
             var command = new SqlCommand();
             command.Connection = _connection;
-            command.CommandText = ""{name}"";
+            command.CommandText = ""[{procedureNamespace}].[{name}]"";
 
             /*if (id.HasValue)
             {{
@@ -78,7 +85,7 @@ namespace {procedureNamespace}
             }}*/
 
 
-            {parameterEntry}
+            {codeParameters}
 
 
             var reader = command.ExecuteReader();
