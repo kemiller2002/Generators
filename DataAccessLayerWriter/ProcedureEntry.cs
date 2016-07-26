@@ -99,8 +99,7 @@ namespace DataAccessLayerWriter
 
         public static string ConvertToType(Field parameter)
         {
-            var parameterType = Type.GetType($"System.{parameter.Type}");
-            var outputType = (parameter.AllowsNull && !parameter.Type.IsClass) ? $"{parameter.Type.Name}?" : parameter.Name;
+            var outputType = (parameter.AllowsNull && !parameter.Type.IsClass) ? $"{parameter.Type.Name}?" : parameter.Type.Name;
 
             return $"{outputType} {parameter.Name}";
         }
