@@ -45,19 +45,27 @@ namespace DataAccessLayerWriter
 		</Element>
              
              */
-            var allowsNull = Boolean.Parse(node.SelectSingleNode("d:Property[@Name='IsNullable']").Attributes["Value"].Value);
-            var lengthString = node.SelectSingleNode("d:Property[@Name='Length']")?.Attributes["Value"].Value;
+            var allowsNullString =
+                node.SelectSingleNode("d:Property[@Name='IsNullable']", manager)?.Attributes["Value"].Value;
 
-            int length;
+            var lengthString = node.SelectSingleNode("d:Property[@Name='Length']", manager)?.Attributes["Value"].Value;
 
 
-            var typeName = node.SelectSingleNode("d:Relationship[@Name='Type']/d:Entry/d:References").Attributes["Name"].Value;
+
+            var typeName = node.SelectSingleNode("d:Relationship[@Name='Type']/d:Entry/d:References", manager)
+                .Attributes["Name"].Value.RemoveSquareBrackets();
+
+            var name = node.Attributes["Name"].Value;
+
+            int lengthResult;
+            bool allowsNullResult;
 
             return new Field
             {
-                AllowsNull = allowsNull,
-                Length =  (int.TryParse(lengthString, out length)) ? (int?)length : null ,
-                Type = GetDataType(typeName)
+                Name = name,
+                AllowsNull = (bool.TryParse(allowsNullString,out allowsNullResult)) && (bool) allowsNullResult,
+                Length =  (int.TryParse(lengthString, out lengthResult)) ? (int?)lengthResult : null ,
+                Type = GetDataType(typeName, node, manager)
             };
         }
 
@@ -74,6 +82,10 @@ namespace DataAccessLayerWriter
 
                 var manager = new XmlNamespaceManager(document.NameTable);
                 manager.AddNamespace("d", document.DocumentElement.NamespaceURI);
+
+                var customTypeNodes = document.SelectNodes("d:DataSchemaModel/d:Model/d:Element[@Type='SqlUserDefinedDataType']", manager)
+                    .Cast<XmlNode>().Select(n => GetCustomType(n, manager)).ToList();
+
 
                 var nodes = document.SelectNodes("d:DataSchemaModel/d:Model/d:Element", manager);
 
@@ -102,16 +114,18 @@ namespace DataAccessLayerWriter
 
             var typeNode = node.SelectSingleNode("d:Element/d:Relationship/d:Entry/d:Element/d:Relationship/d:Entry/d:References", manager);
 
-            var type = (typeNode.Attributes["ExternalSource"].Value.Equals("BuiltIns"))
-                ? typeNode.Attributes["Name"].Value.RemoveSquareBrackets()
-                : "";
+            var type = typeNode.Attributes["Name"].Value.RemoveSquareBrackets();
+                
+                //(typeNode.Attributes["ExternalSource"]?.Value == "BuiltIns")
+                //? typeNode.Attributes["Name"].Value.RemoveSquareBrackets()
+                //: "";
 
             var allowsNull = node.SelectSingleNode("d:Element/d:Property[@Name='DefaultExpressionScript']", manager) != null;
 
             return new Field
             {
                 Name = name,
-                Type = GetDataType(type),
+                Type = GetDataType(type, node, manager),
                 AllowsNull = allowsNull
             };
         }
@@ -131,76 +145,117 @@ namespace DataAccessLayerWriter
                     ProcedureEntry.Create(procedureNamespace, procedureName, parameters));
         }
 
-        public Type GetDataType(string input) => Type.GetType($"System.{LookupDataType(input)}");
 
-        public string LookupDataType(string input)
+        public Type GetDataType(string input, IEnumerable<Field> customTypes) => Type.GetType($"System.{LookupDataType(input, customTypes)}");
+
+        public IEnumerable<Field> LookupDataType(string input, IEnumerable<Field> customTypes)
         {
-           switch (input.ToLowerInvariant())  
+            if (maxRecursionDepth == 0)
             {
-                case "bigint": return "Int64";
-
-                case "binary": return "Byte[]";
-
-                case "bit": return "Boolean";
-
-                case "char": return "String";
-
-                case "date": return "DateTime";
-
-                case "datetime2": return "DateTime";
-
-                case "datetimeoffset": return "DateTimeOffset";
-
-                case "decimal": return "Decimal";
-
-                case "filestream": return "Byte[]";
-
-                case "float": return "Double";
-
-                case "image": return "Byte[]";
-
-                case "int": return "Int32";
-
-                case "money": return "Decimal";
-
-                case "nchar": return "String";
-
-                case "ntext": return "String";
-
-                case "numeric": return "Decimal";
-
-                case "nvarchar": return "String";
-
-                case "real": return "Single";
-
-                case "rowversion": return "Byte[]";
-
-                case "smalldatetime": return "DateTime";
-
-                case "smallint": return "Int16";
-
-                case "smallmoney": return "Decimal";
-
-                case "sql_variant": return "Object";
-
-                case "text": return "String";
-
-                case "time": return "TimeSpan";
-
-                case "timestamp": return "Byte[]";
-
-                case "tinyint": return "Byte";
-
-                case "uniqueidentifier": return "Guid";
-
-                case "varbinary": return "Byte[]";
-
-                case "varchar": return "String";
-
-                case "xml": return "Xml";
+                throw new Exception($"Type not found: {input}");
             }
 
-            throw new Exception($"Type not found: {input}");
+            switch (input.ToLowerInvariant())
+            {
+                case "bigint":
+                   yield return new Field()
+                    {
+                        Name = "bigint",
+                        Type = Type.GetType("System.Int64")
+                    };
+
+                case "binary":
+                    return Type.GetType("System.Byte[]");
+
+                case "bit":
+                    return Type.GetType("System.Boolean");
+
+                case "char":
+                    return Type.GetType("System.String");
+
+                case "date":
+                    return Type.GetType("System.DateTime");
+
+                case "datetime2":
+                    return Type.GetType("System.DateTime");
+
+                case "datetimeoffset":
+                    return Type.GetType("System.DateTimeOffset");
+
+                case "decimal":
+                    return Type.GetType("System.Decimal");
+
+                case "filestream":
+                    return Type.GetType("System.Byte[]");
+
+                case "float":
+                    return Type.GetType("System.Double");
+
+                case "image":
+                    return Type.GetType("System.Byte[]");
+
+                case "int":
+                    return Type.GetType("System.Int32");
+
+                case "money":
+                    return Type.GetType("System.Decimal");
+
+                case "nchar":
+                    return Type.GetType("System.String");
+
+                case "ntext":
+                    return Type.GetType("System.String");
+
+                case "numeric":
+                    return Type.GetType("System.Decimal");
+
+                case "nvarchar":
+                    return Type.GetType("System.String");
+
+                case "real":
+                    return Type.GetType("System.Single");
+
+                case "rowversion":
+                    return Type.GetType("System.Byte[]");
+
+                case "smalldatetime":
+                    return Type.GetType("System.DateTime");
+
+                case "smallint":
+                    return Type.GetType("System.Int16");
+
+                case "smallmoney":
+                    return Type.GetType("System.Decimal");
+
+                case "sql_variant":
+                    return Type.GetType("System.Object");
+
+                case "text":
+                    return Type.GetType("System.String");
+
+                case "time":
+                    return Type.GetType("System.TimeSpan");
+
+                case "timestamp":
+                    return Type.GetType("System.Byte[]");
+
+                case "tinyint":
+                    return Type.GetType("System.Byte");
+
+                case "uniqueidentifier":
+                    return Type.GetType("System.Guid");
+
+                case "varbinary":
+                    return Type.GetType("System.Byte[]");
+
+                case "varchar":
+                    return Type.GetType("System.String");
+
+                case "xml":
+                    return Type.GetType("System.Xml");
+            }
+
+            return LookupDataType(input, node, manager, --maxRecursionDepth);
         }
 
     }

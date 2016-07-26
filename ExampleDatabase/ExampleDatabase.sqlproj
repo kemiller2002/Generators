@@ -65,5 +65,6 @@
     <Build Include="PhoneNumber.sql" />
     <Build Include="ExtendedPhoneNumber.sql" />
     <Build Include="Number.sql" />
+    <Build Include="SelectUserByPhoneNumber.sql" />
   </ItemGroup>
 </Project>
