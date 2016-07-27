@@ -60,11 +60,6 @@ namespace DataAccessLayerWriter
             int lengthResult;
             bool allowsNullResult;
 
-
-            // <Element Type="SqlTableType" Name="[dbo].[PhoneNumbers]">
-            // udt sql table. 
-
-
             return new Field
             {
                 Name = name.RemoveSquareBrackets(),
@@ -72,6 +67,26 @@ namespace DataAccessLayerWriter
                 Length = (int.TryParse(lengthString, out lengthResult)) ? (int?) lengthResult : null,
                 Type = builtInTypes.First(t => t.Name.Equals(typeName)).Type
             };
+        }
+
+        public Entity GetTableType(XmlNode node, XmlNamespaceManager manager, IEnumerable<Field> customTypes)
+        {
+
+            // <Element Type="SqlTableType" Name="[dbo].[PhoneNumbers]">
+            // udt sql table. 
+
+
+            var name = node.Attributes["Name"].Value;
+
+            var columns = node.SelectNodes("d:Relationship/d:Entry/d:Element[@Type='SqlTableTypeSimpleColumn']")
+                .Cast<XmlNode>().Select(n => GetCustomType(n, manager, customTypes));
+
+            return new Entity
+            {
+                Name = name,
+                Fields = columns
+            };
+
         }
 
 
