@@ -43,8 +43,8 @@ namespace DataAccessLayerWriter
 				</Entry>
 			</Relationship>
 		</Element>
-             
              */
+
             var allowsNullString =
                 node.SelectSingleNode("d:Property[@Name='IsNullable']", manager)?.Attributes["Value"].Value;
 
@@ -52,7 +52,7 @@ namespace DataAccessLayerWriter
 
 
 
-            var typeName = node.SelectSingleNode("d:Relationship[@Name='Type']/d:Entry/d:References", manager)
+            var typeName = (node.SelectSingleNode("d:Relationship[@Name='Type']/d:Entry/d:References", manager))
                 .Attributes["Name"].Value.RemoveSquareBrackets();
 
             var name = node.Attributes["Name"].Value;
@@ -69,6 +69,35 @@ namespace DataAccessLayerWriter
             };
         }
 
+
+        public Field GetCustomFieldType(XmlNode node, XmlNamespaceManager manager, IEnumerable<Field> customTypes)
+        {
+            var allowsNullString =
+                node.SelectSingleNode("d:Property[@Name='IsNullable']", manager)?.Attributes["Value"].Value;
+
+            var lengthString = node.SelectSingleNode("d:Property[@Name='Length']", manager)?.Attributes["Value"].Value;
+
+
+
+            var typeName = (node.SelectSingleNode("d:Relationship[@Name='TypeSpecifier']/d:Entry/d:Element/d:Relationship/d:Entry/d:References", manager))
+                .Attributes["Name"].Value.RemoveSquareBrackets();
+
+            var name = node.Attributes["Name"].Value;
+
+            int lengthResult;
+            bool allowsNullResult;
+
+            return new Field
+            {
+                Name = name.RemoveSquareBrackets(),
+                AllowsNull = (bool.TryParse(allowsNullString, out allowsNullResult)) && (bool)allowsNullResult,
+                Length = (int.TryParse(lengthString, out lengthResult)) ? (int?)lengthResult : null,
+                Type = customTypes.First(t => t.Name.Equals(typeName)).Type
+            };
+
+        }
+
+
         public Entity GetTableType(XmlNode node, XmlNamespaceManager manager, IEnumerable<Field> customTypes)
         {
 
@@ -78,8 +107,8 @@ namespace DataAccessLayerWriter
 
             var name = node.Attributes["Name"].Value;
 
-            var columns = node.SelectNodes("d:Relationship/d:Entry/d:Element[@Type='SqlTableTypeSimpleColumn']")
-                .Cast<XmlNode>().Select(n => GetCustomType(n, manager, customTypes));
+            var columns = node.SelectNodes("d:Relationship/d:Entry/d:Element", manager)
+                .Cast<XmlNode>().Select(n => GetCustomFieldType(n, manager, customTypes)).ToList();
 
             return new Entity
             {
@@ -108,6 +137,11 @@ namespace DataAccessLayerWriter
                 var customTypes =
                     document.SelectNodes("d:DataSchemaModel/d:Model/d:Element[@Type='SqlUserDefinedDataType']", manager)
                         .Cast<XmlNode>().Select(n => GetCustomType(n, manager, builtInDataTypes)).ToList();
+
+                var tableTypes =
+                    document.SelectNodes("d:DataSchemaModel/d:Model/d:Element[@Type='SqlTableType']", manager)
+                        .Cast<XmlNode>().Select(selector: n => GetTableType(n, manager, customTypes)).ToList();
+
 
                 var allTypes = builtInDataTypes.Union(customTypes).ToDictionary(x=>x.Name);
 
