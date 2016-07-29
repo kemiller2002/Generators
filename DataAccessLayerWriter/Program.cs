@@ -27,24 +27,6 @@ namespace DataAccessLayerWriter
 
         public Field GetCustomType(XmlNode node, XmlNamespaceManager manager, IEnumerable<Field> builtInTypes)
         {
-
-            /*
-             <Element Type="SqlUserDefinedDataType" Name="[dbo].[PhoneNumber]">
-			<Property Name="IsNullable" Value="False" />
-			<Property Name="Length" Value="10" />
-			<Relationship Name="Schema">
-				<Entry>
-					<References ExternalSource="BuiltIns" Name="[dbo]" />
-				</Entry>
-			</Relationship>
-			<Relationship Name="Type">
-				<Entry>
-					<References ExternalSource="BuiltIns" Name="[varchar]" />
-				</Entry>
-			</Relationship>
-		</Element>
-             */
-
             var allowsNullString =
                 node.SelectSingleNode("d:Property[@Name='IsNullable']", manager)?.Attributes["Value"].Value;
 
@@ -100,12 +82,7 @@ namespace DataAccessLayerWriter
 
         public Entity GetTableType(XmlNode node, XmlNamespaceManager manager, IEnumerable<Field> customTypes)
         {
-
-            // <Element Type="SqlTableType" Name="[dbo].[PhoneNumbers]">
-            // udt sql table. 
-
-
-            var name = node.Attributes["Name"].Value;
+            var name = node.Attributes["Name"].Value.RemoveSquareBrackets();
 
             var columns = node.SelectNodes("d:Relationship/d:Entry/d:Element", manager)
                 .Cast<XmlNode>().Select(n => GetCustomFieldType(n, manager, customTypes)).ToList();
@@ -113,11 +90,11 @@ namespace DataAccessLayerWriter
             return new Entity
             {
                 Name = name,
-                Fields = columns
+                Fields = columns,
+                Type = new DataType { Name = name, IsClass = true }
             };
 
         }
-
 
 
         public bool Write(string inputFile, string outputFolder)
@@ -143,7 +120,8 @@ namespace DataAccessLayerWriter
                         .Cast<XmlNode>().Select(selector: n => GetTableType(n, manager, customTypes)).ToList();
 
 
-                var allTypes = builtInDataTypes.Union(customTypes).ToDictionary(x=>x.Name);
+                var allTypes = builtInDataTypes.Union(customTypes)
+                    .Cast<IType>().Union(tableTypes).ToDictionary(x=>x.Name);
 
                 var nodes = document.SelectNodes("d:DataSchemaModel/d:Model/d:Element", manager);
 
@@ -152,7 +130,13 @@ namespace DataAccessLayerWriter
                     .Select(n => ParseProcedure(n, manager, allTypes));
 
 
-                code.ToList().ForEach(i => File.WriteAllText($"{outputFolder}{i.Item1}", i.Item2));
+                code
+                    .ToList()
+                    .ForEach(i => File.WriteAllText($"{outputFolder}{i.Item1}", i.Item2));
+
+                tableTypes.Select(t => DataTypeEntry.Create(t.Name, t.Fields))
+                    .ToList()
+                    .ForEach(i => File.WriteAllText($"{outputFolder}{i.Item1}.cs", i.Item2));
 
                 return true;
 
@@ -165,7 +149,7 @@ namespace DataAccessLayerWriter
             throw new NotImplementedException();
         }
 
-        public Field CreateParameterEntry(XmlNode node, XmlNamespaceManager manager, Dictionary<string,Field> types)
+        public Field CreateParameterEntry(XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types)
         {
             var fullName = node.SelectSingleNode("d:Element", manager).Attributes["Name"].Value;
             var name = fullName.Split('.').Last().RemoveSquareBrackets();
@@ -187,7 +171,7 @@ namespace DataAccessLayerWriter
             };
         }
 
-        public Tuple<string, string> ParseProcedure(XmlNode node, XmlNamespaceManager manager, Dictionary<string,Field> types)
+        public Tuple<string, string> ParseProcedure(XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types)
         {
             var nameAttributeValue = node.Attributes["Name"].Value;
             var nameAttributeValueParts = nameAttributeValue.Split('.');
@@ -208,187 +192,187 @@ namespace DataAccessLayerWriter
             yield return new Field()
             {
                 Name = "bigint",
-                Type = Type.GetType("System.Int64")
+                Type = Type.GetType("System.Int64").ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "binary",
-                Type = typeof(System.Byte[])
+                Type = typeof(System.Byte[]).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "bit",
-                Type = typeof(System.Boolean)
+                Type = typeof(System.Boolean).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "char",
-                Type = typeof(System.String)
+                Type = typeof(System.String).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "date",
-                Type = typeof(System.DateTime)
+                Type = typeof(System.DateTime).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "datetime2",
-                Type = typeof(System.DateTime)
+                Type = typeof(System.DateTime).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "datetimeoffset",
-                Type = typeof(System.DateTimeOffset)
+                Type = typeof(System.DateTimeOffset).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "decimal",
-                Type = typeof(System.Decimal)
+                Type = typeof(System.Decimal).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "filestream",
-                Type = typeof(System.Byte[])
+                Type = typeof(System.Byte[]).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "float",
-                Type = typeof(System.Double)
+                Type = typeof(System.Double).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "image",
-                Type = typeof(System.Byte[])
+                Type = typeof(System.Byte[]).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "int",
-                Type = typeof(System.Int32)
+                Type = typeof(System.Int32).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "money",
-                Type = typeof(System.Decimal)
+                Type = typeof(System.Decimal).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "nchar",
-                Type = typeof(System.String)
+                Type = typeof(System.String).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "ntext",
-                Type = typeof(System.String)
+                Type = typeof(System.String).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "numeric",
-                Type = typeof(System.Decimal)
+                Type = typeof(System.Decimal).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "nvarchar",
-                Type = typeof(System.String)
+                Type = typeof(System.String).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "real",
-                Type = typeof(System.Single)
+                Type = typeof(System.Single).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "rowversion",
-                Type = typeof(System.Byte[])
+                Type = typeof(System.Byte[]).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "smalldatetime",
-                Type = typeof(System.DateTime)
+                Type = typeof(System.DateTime).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "smallint",
-                Type = typeof(System.Int16)
+                Type = typeof(System.Int16).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "smallmoney",
-                Type = typeof(System.Decimal)
+                Type = typeof(System.Decimal).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "sql_variant",
-                Type = typeof(System.Object)
+                Type = typeof(System.Object).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "text",
-                Type = typeof(System.String)
+                Type = typeof(System.String).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "time",
-                Type = typeof(System.TimeSpan)
+                Type = typeof(System.TimeSpan).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "timestamp",
-                Type = typeof(System.Byte[])
+                Type = typeof(System.Byte[]).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "tinyint",
-                Type = typeof(System.Byte)
+                Type = typeof(System.Byte).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "uniqueidentifier",
-                Type = typeof(System.Guid)
+                Type = typeof(System.Guid).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "varbinary",
-                Type = typeof(System.Byte[])
+                Type = typeof(System.Byte[]).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "varchar",
-                Type = typeof(System.String)
+                Type = typeof(System.String).ToDataType()
             };
 
             yield return new Field()
             {
                 Name = "xml",
-                Type = typeof(XmlDocument)
+                Type = typeof(XmlDocument).ToDataType()
             };
         }
 

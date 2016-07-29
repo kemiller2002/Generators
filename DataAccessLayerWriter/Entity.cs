@@ -7,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace DataAccessLayerWriter
 {
-    public class Entity
+    public class Entity : IType
     {
-        public String Type { get; set; }
+        public DataType Type { get; set; }
         public String Name { get; set; }
-        public IEnumerable Fields { get; set; }
+        public IEnumerable<Field> Fields { get; set; }
     }
 }

@@ -2,10 +2,16 @@
 
 namespace DataAccessLayerWriter
 {
-    public class Field
+    public interface IType
+    {
+        String Name { get; set; }
+        DataType Type { get; set; }
+    }
+
+    public class Field : IType
     {
         public String Name { get; set; }
-        public System.Type Type { get; set; }
+        public DataType Type { get; set; }
         public Boolean AllowsNull { get; set; }
 
         public int? Length { get; set; }
