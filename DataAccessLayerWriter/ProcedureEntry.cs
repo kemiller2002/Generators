@@ -24,7 +24,7 @@ namespace DataAccessLayerWriter
                         {{
                             var parameter = new SqlParameter
                             {{
-                                Value = id,
+                                Value = {parameter.Name},
                                 ParameterName = ""{parameter
                             .Name}"",
                             }};
@@ -42,7 +42,7 @@ namespace DataAccessLayerWriter
             {{
                 var parameter = new SqlParameter
                 {{
-                    Value = id,
+                    Value = {parameter.Name},
                     ParameterName = ""{parameter
                             .Name}"",
                 }};
@@ -60,20 +60,20 @@ namespace DataAccessLayerWriter
                 {
                     return
                         $@"
-                        if({parameter.Name} == null)
-                        {{
-                            throw new ArgumentException (""{parameter
-                            .Name} cannot be null"");
-                        }}
-                        
-                        var parameter = new SqlParameter
-                        {{
-                            Value = id,
-                            ParameterName = ""{parameter
-                                .Name}"",
-                        }};
+            if({parameter.Name} == null)
+            {{
+                throw new ArgumentException (""{parameter
+                .Name} cannot be null"");
+            }}
+            
+            var {parameter.Name}Parameter = new SqlParameter
+            {{
+                 Value = {parameter.Name},
+                ParameterName = ""{parameter
+                    .Name}"",
+            }};
 
-                        command.Parameters.Add(parameter);
+            command.Parameters.Add({parameter.Name}Parameter);
 
                     ";
                 }
@@ -113,6 +113,8 @@ namespace DataAccessLayerWriter
             var codeParameters = parameters.Select(CreateParameterEntry).Join(System.Environment.NewLine);
 
             return $@"
+
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -128,16 +130,18 @@ namespace {procedureNamespace}
 
         readonly SqlConnection _connection;
 
-        public SelectEmployees(SqlConnection connection)
+        public {name}(SqlConnection connection)
         {{
             _connection = connection;
         }}
 
         public IEnumerable<dynamic> Execute({parameterEntries})
         {{
-            var command = new SqlCommand();
-            command.Connection = _connection;
-            command.CommandText = ""[{procedureNamespace}].[{name}]"";
+            var command = new SqlCommand
+            {{
+                Connection = _connection,
+                CommandText = ""[{procedureNamespace}].[{name}]""
+            }};
 
             {codeParameters}
 

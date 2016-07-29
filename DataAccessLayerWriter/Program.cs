@@ -20,7 +20,8 @@ namespace DataAccessLayerWriter
             var writer = new Writer();
             writer.Write(
                 @"C:\Repos\Generators\ExampleDatabase\bin\Debug\ExampleDatabase.dacpac",
-                "C:\\temp\\"
+                @"C:\Repos\Generators\DataAccessLayerWriter\ExampleProjectForDataAccess\",
+                string.Empty
                 );
         }
 
@@ -97,7 +98,7 @@ namespace DataAccessLayerWriter
         }
 
 
-        public bool Write(string inputFile, string outputFolder)
+        public bool Write(string inputFile, string outputFolder, string connectionString)
         {
             var archive = ZipFile.Open(inputFile, System.IO.Compression.ZipArchiveMode.Read);
 
@@ -142,11 +143,6 @@ namespace DataAccessLayerWriter
 
             }
 
-        }
-
-        public String GetCustomTypeName(string name, XmlNode node, XmlNamespaceManager manager)
-        {
-            throw new NotImplementedException();
         }
 
         public Field CreateParameterEntry(XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types)
