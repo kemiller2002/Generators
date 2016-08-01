@@ -1,6 +1,7 @@
 ﻿using System;
 using System.CodeDom;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -32,8 +33,6 @@ namespace DataAccessLayerWriter
                 node.SelectSingleNode("d:Property[@Name='IsNullable']", manager)?.Attributes["Value"].Value;
 
             var lengthString = node.SelectSingleNode("d:Property[@Name='Length']", manager)?.Attributes["Value"].Value;
-
-
 
             var typeName = (node.SelectSingleNode("d:Relationship[@Name='Type']/d:Entry/d:References", manager))
                 .Attributes["Name"].Value.RemoveSquareBrackets();
@@ -103,6 +102,7 @@ namespace DataAccessLayerWriter
             var archive = ZipFile.Open(inputFile, System.IO.Compression.ZipArchiveMode.Read);
 
             using (var stream = archive.Entries.First(x => x.Name.Equals("model.xml")).Open())
+            using (var connection = new SqlConnection(connectionString))
             {
                 var document = new XmlDocument();
                 document.Load(stream);
@@ -122,17 +122,19 @@ namespace DataAccessLayerWriter
 
 
                 var allTypes = builtInDataTypes.Union(customTypes)
-                    .Cast<IType>().Union(tableTypes).ToDictionary(x=>x.Name);
+                    .Cast<IType>().Union(tableTypes).ToDictionary(x => x.Name);
 
                 var nodes = document.SelectNodes("d:DataSchemaModel/d:Model/d:Element", manager);
 
-                var code = nodes.Cast<XmlNode>()
+                var procedures = nodes.Cast<XmlNode>()
                     .Where(n => n.Attributes["Type"].Value.Equals("SqlProcedure"))
-                    .Select(n => ParseProcedure(n, manager, allTypes));
+                    .Select(n => ParseProcedure(n, manager, allTypes)).ToList();
 
+                var procedureResults = procedures.Select(p => CreateProcedureResult(connection, p.Item1, p.Item2)).ToList();
 
-                code
-                    .ToList()
+//                procedureResults.ForEach(x => );
+
+                procedures
                     .ForEach(i => File.WriteAllText($"{outputFolder}{i.Item1}", i.Item2));
 
                 tableTypes.Select(t => DataTypeEntry.Create(t.Name, t.Fields))
@@ -144,6 +146,18 @@ namespace DataAccessLayerWriter
             }
 
         }
+
+
+        public ProcedureResult CreateProcedureResult(SqlConnection connection, string schemaName, string procedureName)
+        {
+            return new ProcedureResult
+            {
+                Name = procedureName,
+                SchemaName = schemaName,
+                Columns = DatabaseInteraction.GetDatabaseResult(connection, schemaName, procedureName).ToArray()
+            };
+        }
+
 
         public Field CreateParameterEntry(XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types)
         {
@@ -167,7 +181,7 @@ namespace DataAccessLayerWriter
             };
         }
 
-        public Tuple<string, string> ParseProcedure(XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types)
+        public Tuple<string, string, string> ParseProcedure(XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types)
         {
             var nameAttributeValue = node.Attributes["Name"].Value;
             var nameAttributeValueParts = nameAttributeValue.Split('.');
@@ -178,7 +192,7 @@ namespace DataAccessLayerWriter
             var parameters = node.SelectNodes("d:Relationship[@Name='Parameters']/d:Entry", manager)
                 .Cast<XmlNode>().Select(n => CreateParameterEntry(n, manager, types));
 
-            return new Tuple<string, string>($"{procedureNamespace}.{procedureName}.cs",
+            return new Tuple<string, string, string>(procedureNamespace, procedureName,
                 ProcedureEntry.Create(procedureNamespace, procedureName, parameters));
         }
 
