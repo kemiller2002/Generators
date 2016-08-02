@@ -33,6 +33,7 @@ namespace DataAccessLayerWriter
 
             using (var command = new SqlCommand {CommandText = sql})
             {
+                command.Connection = connection;
                 command.Parameters.Add(new SqlParameter("@procedureName", procedureName));
                 command.Parameters.Add(new SqlParameter("@schemaname", schemaName));
 
@@ -42,6 +43,8 @@ namespace DataAccessLayerWriter
                 {
                     yield return CreateProcedureColumnEntry(reader);
                 }
+
+                reader.Close();
             }
 
         }
@@ -50,13 +53,12 @@ namespace DataAccessLayerWriter
         {
             return new ProcedureColumnEntry
             {
-                ColumnOrdinal = (int)reader["column_ordingal"], 
+                ColumnOrdinal = (int)reader["column_ordinal"], 
                 Name = reader["name"].ToString(), 
                 IsNullable = (bool)reader["is_nullable"],
                 SystemTypeId = (int) reader["system_type_id"], 
             };
         }
-
 
     }
 }

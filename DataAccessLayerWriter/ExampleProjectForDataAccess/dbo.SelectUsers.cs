@@ -8,6 +8,23 @@ using System.Dynamic;
 using System.Net.Configuration;
 
 
+
+                namespace dbo
+                {
+                    public class SelectUsersResult
+                    {
+                        public SelectUsersResult (IDataReader reader)
+                        {
+                        
+                                        
+
+
+                        }
+
+                    }
+                }
+            
+
 namespace dbo
 {
 
@@ -21,7 +38,7 @@ namespace dbo
             _connection = connection;
         }
 
-        public IEnumerable<dynamic> Execute(Int32? @Id, String @FirstName)
+        public IEnumerable<dbo.SelectUsersResult> Execute(Int32? @Id, String @FirstName)
         {
             var command = new SqlCommand
             {
@@ -54,23 +71,14 @@ namespace dbo
             };
 
             command.Parameters.Add(@FirstNameParameter);
-
-                    
-
-
+            
             var reader = command.ExecuteReader();
 
             while (reader.Read())
             {
-                dynamic record = new ExpandoObject();
-
-                for (var ii = 0; ii < reader.FieldCount; ii++)
-                {
-                    record[reader.GetName(ii)] = reader[ii];
-                }
-
-                yield return record;
+                yield return new dbo.SelectUsersResult(reader);
             }
+            
         }
 
 

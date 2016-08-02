@@ -104,13 +104,58 @@ namespace DataAccessLayerWriter
             return $"{outputType} {parameter.Name}";
         }
 
+        public static string CreateResultEntry(ProcedureResult result)
+        {
+            return $@"
+                namespace {result.SchemaName}
+                {{
+                    public class {result.Name}Result
+                    {{
+                        public {result.Name}Result (IDataReader reader)
+                        {{
+                        
+                                        
 
-        public static string Create(string procedureNamespace, string name, IEnumerable<Field> parameters)
+
+                        }}
+
+                    }}
+                }}
+            ";
+        }
+
+
+        public static string BuildResultExecutionCode(ProcedureResult result, string sqlCommandName)
         {
 
+            if (result == null)
+            {
+                return $"{sqlCommandName}.Execute()";
+            }
+
+            return $@"
+            var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {{
+                yield return new {result.SchemaName}.{result.Name}Result(reader);
+            }}
+            ";
+
+        }
+
+        
+        public static string Create(string procedureNamespace, string name, IEnumerable<Field> parameters, ProcedureResult result)
+        {
             var parameterEntries = parameters.Select(ConvertToType).Join(", ");
 
             var codeParameters = parameters.Select(CreateParameterEntry).Join(System.Environment.NewLine);
+
+            var resultCode = (result == null) ? String.Empty : CreateResultEntry(result);
+
+            var executionResult = (result == null) ? "int" : $"IEnumerable<{result.SchemaName}.{result.Name}Result>";
+
+            var executionCodeToCreateResult = BuildResultExecutionCode(result, "command");
 
             return $@"
 
@@ -121,6 +166,8 @@ using System.Data.SqlClient;
 using System.Dynamic;
 using System.Net.Configuration;
 
+
+{resultCode}
 
 namespace {procedureNamespace}
 {{
@@ -135,7 +182,7 @@ namespace {procedureNamespace}
             _connection = connection;
         }}
 
-        public IEnumerable<dynamic> Execute({parameterEntries})
+        public {executionResult} Execute({parameterEntries})
         {{
             var command = new SqlCommand
             {{
@@ -146,19 +193,7 @@ namespace {procedureNamespace}
             {codeParameters}
 
 
-            var reader = command.ExecuteReader();
-
-            while (reader.Read())
-            {{
-                dynamic record = new ExpandoObject();
-
-                for (var ii = 0; ii < reader.FieldCount; ii++)
-                {{
-                    record[reader.GetName(ii)] = reader[ii];
-                }}
-
-                yield return record;
-            }}
+            {executionCodeToCreateResult}
         }}
 
 

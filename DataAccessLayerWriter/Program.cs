@@ -22,7 +22,7 @@ namespace DataAccessLayerWriter
             writer.Write(
                 @"C:\Repos\Generators\ExampleDatabase\bin\Debug\ExampleDatabase.dacpac",
                 @"C:\Repos\Generators\DataAccessLayerWriter\ExampleProjectForDataAccess\",
-                string.Empty
+                "Data Source=localhost;Initial Catalog=ExampleDatabase;Integrated Security=SSPI"
                 );
         }
 
@@ -104,6 +104,8 @@ namespace DataAccessLayerWriter
             using (var stream = archive.Entries.First(x => x.Name.Equals("model.xml")).Open())
             using (var connection = new SqlConnection(connectionString))
             {
+                connection.Open ();
+
                 var document = new XmlDocument();
                 document.Load(stream);
 
@@ -128,14 +130,11 @@ namespace DataAccessLayerWriter
 
                 var procedures = nodes.Cast<XmlNode>()
                     .Where(n => n.Attributes["Type"].Value.Equals("SqlProcedure"))
-                    .Select(n => ParseProcedure(n, manager, allTypes)).ToList();
+                    .Select(n => ParseProcedure(n, manager, allTypes, connection)).ToList();
 
-                var procedureResults = procedures.Select(p => CreateProcedureResult(connection, p.Item1, p.Item2)).ToList();
-
-//                procedureResults.ForEach(x => );
 
                 procedures
-                    .ForEach(i => File.WriteAllText($"{outputFolder}{i.Item1}", i.Item2));
+                    .ForEach(i => File.WriteAllText($"{outputFolder}{i.Item1}.{i.Item2}.cs", i.Item3));
 
                 tableTypes.Select(t => DataTypeEntry.Create(t.Name, t.Fields))
                     .ToList()
@@ -150,13 +149,15 @@ namespace DataAccessLayerWriter
 
         public ProcedureResult CreateProcedureResult(SqlConnection connection, string schemaName, string procedureName)
         {
-            return new ProcedureResult
+            var columns = DatabaseInteraction.GetDatabaseResult(connection, schemaName, procedureName).ToArray();
+
+            return (columns.Length == 0) ? null : new ProcedureResult
             {
                 Name = procedureName,
                 SchemaName = schemaName,
-                Columns = DatabaseInteraction.GetDatabaseResult(connection, schemaName, procedureName).ToArray()
+                Columns = columns
             };
-        }
+        }                                                                                                   
 
 
         public Field CreateParameterEntry(XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types)
@@ -181,7 +182,7 @@ namespace DataAccessLayerWriter
             };
         }
 
-        public Tuple<string, string, string> ParseProcedure(XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types)
+        public Tuple<string, string, string> ParseProcedure(XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types, SqlConnection connection)
         {
             var nameAttributeValue = node.Attributes["Name"].Value;
             var nameAttributeValueParts = nameAttributeValue.Split('.');
@@ -189,11 +190,13 @@ namespace DataAccessLayerWriter
             var procedureNamespace = nameAttributeValueParts[0].RemoveSquareBrackets();
             var procedureName = nameAttributeValueParts[1].RemoveSquareBrackets();
 
+            var procedureResult = CreateProcedureResult(connection, procedureNamespace, procedureName);
+
             var parameters = node.SelectNodes("d:Relationship[@Name='Parameters']/d:Entry", manager)
                 .Cast<XmlNode>().Select(n => CreateParameterEntry(n, manager, types));
 
             return new Tuple<string, string, string>(procedureNamespace, procedureName,
-                ProcedureEntry.Create(procedureNamespace, procedureName, parameters));
+                ProcedureEntry.Create(procedureNamespace, procedureName, parameters, procedureResult));
         }
 
         public IEnumerable<Field> GetBuiltInDataTypes()
