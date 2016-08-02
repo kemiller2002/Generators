@@ -29,6 +29,7 @@ namespace DataAccessLayerWriter
                 AND t.system_type_id = t.user_type_id
                 -- did this to remove all the duplicates from custom types.
             WHERE t.name<> 'sysname' 
+            AND dm.user_type_id IS NULL
             ORDER BY dm.name";
 
             using (var command = new SqlCommand {CommandText = sql})
@@ -57,6 +58,7 @@ namespace DataAccessLayerWriter
                 Name = reader["name"].ToString(), 
                 IsNullable = (bool)reader["is_nullable"],
                 SystemTypeId = (int) reader["system_type_id"], 
+                TypeName = reader["TypeName"].ToString()
             };
         }
 

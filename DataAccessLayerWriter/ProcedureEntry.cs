@@ -100,15 +100,15 @@ namespace DataAccessLayerWriter
         public static string ConvertToType(Field parameter)
         {
             var outputType = (parameter.AllowsNull && !parameter.Type.IsClass) ? $"{parameter.Type.Name}?" : parameter.Type.Name;
-
-            return $"{outputType} {parameter.Name}";
+            var outVariable = (parameter.AllowsNull)? "ref" : "" ;
+            return $"{outVariable} {outputType} {parameter.Name}";
         }
 
-        public static string CreateResultEntry(ProcedureResult result)
+        public static string CreateResultEntry(ProcedureResult result, Dictionary<string, IType> types)
         {
 
-            var bindings = result.Columns.Select(c => $"{result.Name}").Join(System.Environment.NewLine);
-            var properties = result.Columns.Select(c => $"public {c.TypeName} {c.Name}{{get;set;}}").Join(System.Environment.NewLine);
+            var bindings = result.Columns.Select(c => $"{c.Name} = ({types[c.TypeName].Type.Name})reader[\"{c.Name}\"] ;").Join(System.Environment.NewLine);
+            var properties = result.Columns.Select(c => $"public {types[c.TypeName].Type.Name} {c.Name}{{get;set;}}").Join(System.Environment.NewLine);
 
             return $@"
                 namespace {result.SchemaName}
@@ -148,13 +148,13 @@ namespace DataAccessLayerWriter
         }
 
         
-        public static string Create(string procedureNamespace, string name, IEnumerable<Field> parameters, ProcedureResult result)
+        public static string Create(string procedureNamespace, string name, IEnumerable<Field> parameters, ProcedureResult result, Dictionary<string, IType> types)
         {
             var parameterEntries = parameters.Select(ConvertToType).Join(", ");
 
             var codeParameters = parameters.Select(CreateParameterEntry).Join(System.Environment.NewLine);
 
-            var resultCode = (result == null) ? String.Empty : CreateResultEntry(result);
+            var resultCode = (result == null) ? String.Empty : CreateResultEntry(result, types);
 
             var executionResult = (result == null) ? "int" : $"IEnumerable<{result.SchemaName}.{result.Name}Result>";
 

@@ -174,11 +174,15 @@ namespace DataAccessLayerWriter
             var allowsNull = node.SelectSingleNode("d:Element/d:Property[@Name='DefaultExpressionScript']", manager) !=
                              null;
 
+            var isOuput = node.SelectSingleNode("d:Element/d:Property[@Name='IsOutput']", manager) !=
+                             null; ;
+
             return new Field
             {
                 Name = name,
                 Type = types[typeName].Type,
-                AllowsNull = allowsNull
+                AllowsNull = allowsNull,
+                IsOutput = isOuput
             };
         }
 
@@ -196,7 +200,7 @@ namespace DataAccessLayerWriter
                 .Cast<XmlNode>().Select(n => CreateParameterEntry(n, manager, types));
 
             return new Tuple<string, string, string>(procedureNamespace, procedureName,
-                ProcedureEntry.Create(procedureNamespace, procedureName, parameters, procedureResult));
+                ProcedureEntry.Create(procedureNamespace, procedureName, parameters, procedureResult, types));
         }
 
         public IEnumerable<Field> GetBuiltInDataTypes()

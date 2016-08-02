@@ -14,5 +14,15 @@ namespace DataAccessLayerWriter
 
 
         public static string Join(this IEnumerable<string> items, string separator) => String.Join(separator, items);
+        public static string Join(this IEnumerable<char> items, string separator) => String.Join(separator, items);
+
+        static string MakeWordPascal(string word) => word[0].ToString().ToUpper() + word.Skip(1).Join("");
+
+
+        public static string MakePascalCase(this string item) => 
+            item.Split(new [] { '_', '_', '-', ' '}, StringSplitOptions.None).Select(MakeWordPascal).Join(",");
+
+
+
     }
 }

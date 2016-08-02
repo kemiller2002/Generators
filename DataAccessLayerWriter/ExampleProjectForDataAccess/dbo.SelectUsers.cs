@@ -15,18 +15,16 @@ using System.Net.Configuration;
                     {
                         public SelectUsersResult (IDataReader reader)
                         {
-                            SelectUsers
-SelectUsers
-SelectUsers
-SelectUsers
-SelectUsers
+                            EmailAddress = (String)reader["EmailAddress"] ;
+FirstName = (String)reader["FirstName"] ;
+Id = (Int32)reader["Id"] ;
+LastName = (String)reader["LastName"] ;
                         }
 
-                        public  EmailAddress{get;set;}
-public  FirstName{get;set;}
-public  Id{get;set;}
-public  LastName{get;set;}
-public  PhoneNumber{get;set;}
+                        public String EmailAddress{get;set;}
+public String FirstName{get;set;}
+public Int32 Id{get;set;}
+public String LastName{get;set;}
 
                     }
                 }

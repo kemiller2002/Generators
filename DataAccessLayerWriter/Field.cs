@@ -15,5 +15,7 @@ namespace DataAccessLayerWriter
         public Boolean AllowsNull { get; set; }
 
         public int? Length { get; set; }
+
+        public bool IsOutput { get; set; }
     }
 }
