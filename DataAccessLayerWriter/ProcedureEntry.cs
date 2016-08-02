@@ -106,6 +106,10 @@ namespace DataAccessLayerWriter
 
         public static string CreateResultEntry(ProcedureResult result)
         {
+
+            var bindings = result.Columns.Select(c => $"{result.Name}").Join(System.Environment.NewLine);
+            var properties = result.Columns.Select(c => $"public {c.TypeName} {c.Name}{{get;set;}}").Join(System.Environment.NewLine);
+
             return $@"
                 namespace {result.SchemaName}
                 {{
@@ -113,11 +117,10 @@ namespace DataAccessLayerWriter
                     {{
                         public {result.Name}Result (IDataReader reader)
                         {{
-                        
-                                        
-
-
+                            {bindings}
                         }}
+
+                        {properties}
 
                     }}
                 }}

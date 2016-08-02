@@ -15,11 +15,20 @@ using System.Net.Configuration;
                     {
                         public GetUsersByPhoneNumberListResult (IDataReader reader)
                         {
-                        
-                                        
-
-
+                            GetUsersByPhoneNumberList
+GetUsersByPhoneNumberList
+GetUsersByPhoneNumberList
+GetUsersByPhoneNumberList
+GetUsersByPhoneNumberList
+GetUsersByPhoneNumberList
                         }
+
+                        public  EmailAddress{get;set;}
+public  FirstName{get;set;}
+public  Id{get;set;}
+public  LastName{get;set;}
+public  PhoneNumber{get;set;}
+public  PhoneNumber{get;set;}
 
                     }
                 }

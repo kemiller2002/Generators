@@ -15,11 +15,18 @@ using System.Net.Configuration;
                     {
                         public SelectUsersResult (IDataReader reader)
                         {
-                        
-                                        
-
-
+                            SelectUsers
+SelectUsers
+SelectUsers
+SelectUsers
+SelectUsers
                         }
+
+                        public  EmailAddress{get;set;}
+public  FirstName{get;set;}
+public  Id{get;set;}
+public  LastName{get;set;}
+public  PhoneNumber{get;set;}
 
                     }
                 }
@@ -71,6 +78,10 @@ namespace dbo
             };
 
             command.Parameters.Add(@FirstNameParameter);
+
+                    
+
+
             
             var reader = command.ExecuteReader();
 
