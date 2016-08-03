@@ -11,9 +11,9 @@ using System.Net.Configuration;
 
                 namespace dbo
                 {
-                    public class SelectUsersResult
+                    public class SelectUsersResultEntry
                     {
-                        public SelectUsersResult (IDataReader reader)
+                        public SelectUsersResultEntry (IDataReader reader)
                         {
                             EmailAddress = (String)reader["EmailAddress"] ;
 FirstName = (String)reader["FirstName"] ;
@@ -30,6 +30,21 @@ public String LastName{get;set;}
                 }
             
 
+
+                    namespace dbo
+                    {
+                        public class SelectUsersResult 
+                        {
+                             public dbo.SelectUsers Recordset {get;set;}
+                    
+                            
+                        }
+
+                    }
+    
+    
+                
+
 namespace dbo
 {
 
@@ -43,7 +58,7 @@ namespace dbo
             _connection = connection;
         }
 
-        public IEnumerable<dbo.SelectUsersResult> Execute(Int32? @Id, String @FirstName)
+        public IEnumerable<dbo.SelectUsersResult> Execute(ref Int32? @Id,  String @FirstName)
         {
             var command = new SqlCommand
             {
@@ -82,7 +97,7 @@ namespace dbo
 
             
             var reader = command.ExecuteReader();
-
+            
             while (reader.Read())
             {
                 yield return new dbo.SelectUsersResult(reader);
