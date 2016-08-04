@@ -14,87 +14,61 @@ namespace DataAccessLayerWriter
 
         static string CreateParameterEntry(Field parameter)
         {
-            if (parameter.AllowsNull)
+
+            var setParameterDirection = (parameter.IsOutput) ? ", Direction = ParameterDirection.InputOutput " : "";
+
+            if (parameter.AllowsNull && !parameter.Type.IsClass)
             {
-                if (parameter.Type.IsClass)
-                {
-                    return
-                        $@"
-                        if({parameter.Name} != null)
-                        {{
-                            var parameter = new SqlParameter
-                            {{
-                                Value = {parameter.Name},
-                                ParameterName = ""{parameter
-                            .Name}"",
-                            }};
 
-                            command.Parameters.Add(parameter);
-                        }}
-
-                    ";
-                }
-                else
-                {
-                    return
-                        $@"
+                return
+                    $@"
             if ({parameter.Name}.HasValue)
             {{
                 var parameter = new SqlParameter
                 {{
-                    Value = {parameter.Name},
+                    Value = {parameter
+                        .Name},
                     ParameterName = ""{parameter
-                            .Name}"",
+                            .Name}""
+                    {setParameterDirection}
                 }};
 
                 command.Parameters.Add(parameter);
                 
             }}";
-                }
-
             }
-            else
-            {
 
-                if (parameter.Type.IsClass)
-                {
-                    return
-                        $@"
-            if({parameter.Name} == null)
-            {{
-                throw new ArgumentException (""{parameter
-                .Name} cannot be null"");
-            }}
+
+            var checkForNull = (parameter.Type.IsClass && !parameter.AllowsNull)
+                ? $@" if({parameter.Name} == null)
+                    {{
+                        throw new ArgumentException(""{parameter
+                    .Name} cannot be null"");
+                    }}
+                "
+                : "";
+
+
+            return
+                $@"
+
+            {checkForNull}
             
             var {parameter.Name}Parameter = new SqlParameter
             {{
-                 Value = {parameter.Name},
+                 Value = {parameter
+                    .Name},
                 ParameterName = ""{parameter
-                    .Name}"",
+                        .Name}""
+                {setParameterDirection}
             }};
 
             command.Parameters.Add({parameter.Name}Parameter);
 
                     ";
-                }
-                else
-                {
-                    return
-                        $@"
-                var parameter = new SqlParameter
-                {{
-                    Value = id,
-                    ParameterName = ""{parameter
-                            .Name}"",
-                }};
-
-                    command.Parameters.Add(parameter);
-                ";
-                }
 
 
 
-            }
         }
 
         public static string ConvertToType(Field parameter)
@@ -134,7 +108,7 @@ namespace DataAccessLayerWriter
                 .Join(System.Environment.NewLine);
 
             var setParameters = parameters.Where(p => p.IsOutput)
-                .Select(p => $"{p.Name} = {sqlCommandName}.{p.Name}.Value");
+                .Select(p => $"{p.Name} = ({p.Type.Name}){sqlCommandName}.Parameters[\"{p.Name}\"].Value");
 
             if (result == null)
             {
@@ -142,9 +116,9 @@ namespace DataAccessLayerWriter
                 var affectedRecordsParameters = setParameters.Union(new[] {"RecordsAffected = result"})
                     .Join("," + System.Environment.NewLine);
 
-                return $@"var result = {sqlCommandName}.Execute()
+                return $@"var result = {sqlCommandName}.ExecuteNonQuery();
                     
-                return new {procedureNamespace}{name}Result
+                return new {procedureNamespace}.{name}Result
                 {{
                     {affectedRecordsParameters}
                 }};
@@ -170,7 +144,7 @@ namespace DataAccessLayerWriter
         {
 
             var executionResult = (result == null)
-                ? "int RecordsAffected {get;set;}" : $" public IEnumerable<{result.SchemaName}.{result.Name}Record> Recordset {{get;set;}}";
+                ? "public int RecordsAffected {get;set;}" : $" public IEnumerable<{result.SchemaName}.{result.Name}Record> Recordset {{get;set;}}";
 
             var parameterResults = parameters.Where(p => p.IsOutput).Select(p => $"public {p.Type.Name} {p.Name} {{get;set;}}").Join(System.Environment.NewLine);
             return $@"
@@ -184,8 +158,6 @@ namespace DataAccessLayerWriter
                         }}
 
                     }}
-    
-    
                 ";
         }
 
@@ -238,8 +210,10 @@ namespace {procedureNamespace}
             var command = new SqlCommand
             {{
                 Connection = _connection,
-                CommandText = ""[{procedureNamespace}].[{name}]""
+                CommandText = ""[{procedureNamespace}].[{name}]"",
+                CommandType = CommandType.StoredProcedure
             }};
+
 
             {codeParameters}
 

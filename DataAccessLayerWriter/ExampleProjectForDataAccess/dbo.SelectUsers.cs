@@ -42,8 +42,6 @@ public String LastName{get;set;}
                         }
 
                     }
-    
-    
                 
 
 namespace dbo
@@ -64,8 +62,10 @@ namespace dbo
             var command = new SqlCommand
             {
                 Connection = _connection,
-                CommandText = "[dbo].[SelectUsers]"
+                CommandText = "[dbo].[SelectUsers]",
+                CommandType = CommandType.StoredProcedure
             };
+
 
             
             if (@Id.HasValue)
@@ -73,22 +73,26 @@ namespace dbo
                 var parameter = new SqlParameter
                 {
                     Value = @Id,
-                    ParameterName = "@Id",
+                    ParameterName = "@Id"
+                    
                 };
 
                 command.Parameters.Add(parameter);
                 
             }
 
-            if(@FirstName == null)
-            {
-                throw new ArgumentException ("@FirstName cannot be null");
-            }
+
+             if(@FirstName == null)
+                    {
+                        throw new ArgumentException("@FirstName cannot be null");
+                    }
+                
             
             var @FirstNameParameter = new SqlParameter
             {
                  Value = @FirstName,
-                ParameterName = "@FirstName",
+                ParameterName = "@FirstName"
+                
             };
 
             command.Parameters.Add(@FirstNameParameter);

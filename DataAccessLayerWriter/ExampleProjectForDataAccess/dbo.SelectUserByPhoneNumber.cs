@@ -42,8 +42,6 @@ public String LastName{get;set;}
                         }
 
                     }
-    
-    
                 
 
 namespace dbo
@@ -64,19 +62,24 @@ namespace dbo
             var command = new SqlCommand
             {
                 Connection = _connection,
-                CommandText = "[dbo].[SelectUserByPhoneNumber]"
+                CommandText = "[dbo].[SelectUserByPhoneNumber]",
+                CommandType = CommandType.StoredProcedure
             };
 
+
             
-            if(@PhoneNumber == null)
-            {
-                throw new ArgumentException ("@PhoneNumber cannot be null");
-            }
+
+             if(@PhoneNumber == null)
+                    {
+                        throw new ArgumentException("@PhoneNumber cannot be null");
+                    }
+                
             
             var @PhoneNumberParameter = new SqlParameter
             {
                  Value = @PhoneNumber,
-                ParameterName = "@PhoneNumber",
+                ParameterName = "@PhoneNumber"
+                
             };
 
             command.Parameters.Add(@PhoneNumberParameter);

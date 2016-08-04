@@ -16,14 +16,12 @@ using System.Linq;
                     {
                         public class SelectUserFirstNameResult
                         {
-                            int RecordsAffected {get;set;}
+                            public int RecordsAffected {get;set;}
                     
                             public String @FirstName {get;set;}
                         }
 
                     }
-    
-    
                 
 
 namespace dbo
@@ -44,34 +42,42 @@ namespace dbo
             var command = new SqlCommand
             {
                 Connection = _connection,
-                CommandText = "[dbo].[SelectUserFirstName]"
+                CommandText = "[dbo].[SelectUserFirstName]",
+                CommandType = CommandType.StoredProcedure
             };
 
+
             
-            if(@PhoneNumber == null)
-            {
-                throw new ArgumentException ("@PhoneNumber cannot be null");
-            }
+
+             if(@PhoneNumber == null)
+                    {
+                        throw new ArgumentException("@PhoneNumber cannot be null");
+                    }
+                
             
             var @PhoneNumberParameter = new SqlParameter
             {
                  Value = @PhoneNumber,
-                ParameterName = "@PhoneNumber",
+                ParameterName = "@PhoneNumber"
+                
             };
 
             command.Parameters.Add(@PhoneNumberParameter);
 
                     
 
-            if(@FirstName == null)
-            {
-                throw new ArgumentException ("@FirstName cannot be null");
-            }
+
+             if(@FirstName == null)
+                    {
+                        throw new ArgumentException("@FirstName cannot be null");
+                    }
+                
             
             var @FirstNameParameter = new SqlParameter
             {
                  Value = @FirstName,
-                ParameterName = "@FirstName",
+                ParameterName = "@FirstName"
+                , Direction = ParameterDirection.InputOutput 
             };
 
             command.Parameters.Add(@FirstNameParameter);
@@ -79,11 +85,11 @@ namespace dbo
                     
 
 
-            var result = command.Execute()
+            var result = command.ExecuteNonQuery();
                     
-                return new dboSelectUserFirstNameResult
+                return new dbo.SelectUserFirstNameResult
                 {
-                    @FirstName = command.@FirstName.Value,
+                    @FirstName = (String)command.Parameters["@FirstName"].Value,
 RecordsAffected = result
                 };
                 
