@@ -6,14 +6,15 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Dynamic;
 using System.Net.Configuration;
+using System.Linq;
 
 
 
                 namespace dbo
                 {
-                    public class SelectUsersResultEntry
+                    public class SelectUsersRecord
                     {
-                        public SelectUsersResultEntry (IDataReader reader)
+                        public SelectUsersRecord (IDataRecord reader)
                         {
                             EmailAddress = (String)reader["EmailAddress"] ;
 FirstName = (String)reader["FirstName"] ;
@@ -33,9 +34,9 @@ public String LastName{get;set;}
 
                     namespace dbo
                     {
-                        public class SelectUsersResult 
+                        public class SelectUsersResult
                         {
-                             public dbo.SelectUsers Recordset {get;set;}
+                             public IEnumerable<dbo.SelectUsersRecord> Recordset {get;set;}
                     
                             
                         }
@@ -58,7 +59,7 @@ namespace dbo
             _connection = connection;
         }
 
-        public IEnumerable<dbo.SelectUsersResult> Execute(ref Int32? @Id,  String @FirstName)
+        public dbo.SelectUsersResult Execute(Int32? @Id, String @FirstName)
         {
             var command = new SqlCommand
             {
@@ -98,10 +99,12 @@ namespace dbo
             
             var reader = command.ExecuteReader();
             
-            while (reader.Read())
-            {
-                yield return new dbo.SelectUsersResult(reader);
-            }
+
+            return new dbo.SelectUsersResult
+                {
+                    
+                    Recordset = (from IDataRecord r in reader select new dbo.SelectUsersRecord  (r) )
+                };
             
         }
 

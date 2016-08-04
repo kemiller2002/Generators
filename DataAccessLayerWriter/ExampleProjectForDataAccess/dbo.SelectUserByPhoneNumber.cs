@@ -6,14 +6,15 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Dynamic;
 using System.Net.Configuration;
+using System.Linq;
 
 
 
                 namespace dbo
                 {
-                    public class SelectUserByPhoneNumberResultEntry
+                    public class SelectUserByPhoneNumberRecord
                     {
-                        public SelectUserByPhoneNumberResultEntry (IDataReader reader)
+                        public SelectUserByPhoneNumberRecord (IDataRecord reader)
                         {
                             EmailAddress = (String)reader["EmailAddress"] ;
 FirstName = (String)reader["FirstName"] ;
@@ -33,9 +34,9 @@ public String LastName{get;set;}
 
                     namespace dbo
                     {
-                        public class SelectUserByPhoneNumberResult 
+                        public class SelectUserByPhoneNumberResult
                         {
-                             public dbo.SelectUserByPhoneNumber Recordset {get;set;}
+                             public IEnumerable<dbo.SelectUserByPhoneNumberRecord> Recordset {get;set;}
                     
                             
                         }
@@ -58,7 +59,7 @@ namespace dbo
             _connection = connection;
         }
 
-        public IEnumerable<dbo.SelectUserByPhoneNumberResult> Execute( String @PhoneNumber)
+        public dbo.SelectUserByPhoneNumberResult Execute(String @PhoneNumber)
         {
             var command = new SqlCommand
             {
@@ -86,10 +87,12 @@ namespace dbo
             
             var reader = command.ExecuteReader();
             
-            while (reader.Read())
-            {
-                yield return new dbo.SelectUserByPhoneNumberResult(reader);
-            }
+
+            return new dbo.SelectUserByPhoneNumberResult
+                {
+                    
+                    Recordset = (from IDataRecord r in reader select new dbo.SelectUserByPhoneNumberRecord  (r) )
+                };
             
         }
 

@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Dynamic;
 using System.Net.Configuration;
+using System.Linq;
 
 
 
@@ -13,7 +14,7 @@ using System.Net.Configuration;
 
                     namespace dbo
                     {
-                        public class SelectUserFirstNameResult 
+                        public class SelectUserFirstNameResult
                         {
                             int RecordsAffected {get;set;}
                     
@@ -38,7 +39,7 @@ namespace dbo
             _connection = connection;
         }
 
-        public int Execute( String @PhoneNumber,  String @FirstName)
+        public dbo.SelectUserFirstNameResult Execute(String @PhoneNumber, String @FirstName)
         {
             var command = new SqlCommand
             {
@@ -79,10 +80,13 @@ namespace dbo
 
 
             var result = command.Execute()
-
-                    @FirstName = @FirstNameParameter.Value;
-                return result;
-
+                    
+                return new dboSelectUserFirstNameResult
+                {
+                    @FirstName = command.@FirstName.Value,
+RecordsAffected = result
+                };
+                
         }
 
 

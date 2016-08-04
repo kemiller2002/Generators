@@ -100,11 +100,10 @@ namespace DataAccessLayerWriter
         public static string ConvertToType(Field parameter)
         {
             var outputType = (parameter.AllowsNull && !parameter.Type.IsClass) ? $"{parameter.Type.Name}?" : parameter.Type.Name;
-            var outVariable = (parameter.AllowsNull)? "ref" : "" ;
-            return $"{outVariable} {outputType} {parameter.Name}";
+            return $"{outputType} {parameter.Name}";
         }
 
-        public static string CreateResultEntry(ProcedureResult result, Dictionary<string, IType> types)
+        public static string CreateRecord(ProcedureResult result, Dictionary<string, IType> types)
         {
 
             var bindings = result.Columns.Select(c => $"{c.Name} = ({types[c.TypeName].Type.Name})reader[\"{c.Name}\"] ;").Join(System.Environment.NewLine);
@@ -113,9 +112,9 @@ namespace DataAccessLayerWriter
             return $@"
                 namespace {result.SchemaName}
                 {{
-                    public class {result.Name}ResultEntry
+                    public class {result.Name}Record
                     {{
-                        public {result.Name}ResultEntry (IDataReader reader)
+                        public {result.Name}Record (IDataRecord reader)
                         {{
                             {bindings}
                         }}
@@ -128,31 +127,41 @@ namespace DataAccessLayerWriter
         }
 
 
-        public static string BuildResultExecutionCode(ProcedureResult result, string sqlCommandName, IEnumerable<Field> parameters)
+        public static string BuildResultExecutionCode(string procedureNamespace, string name, ProcedureResult result, string sqlCommandName, IEnumerable<Field> parameters)
         {
             var outputAssignment = parameters.Where(p => p.IsOutput)
                 .Select(p => $"{p.Name} = {p.Name}Parameter.Value;")
                 .Join(System.Environment.NewLine);
 
+            var setParameters = parameters.Where(p => p.IsOutput)
+                .Select(p => $"{p.Name} = {sqlCommandName}.{p.Name}.Value");
 
             if (result == null)
             {
-                return $@"var result = {sqlCommandName}.Execute()
 
-                    {outputAssignment}
-                return result;
-";
+                var affectedRecordsParameters = setParameters.Union(new[] {"RecordsAffected = result"})
+                    .Join("," + System.Environment.NewLine);
+
+                return $@"var result = {sqlCommandName}.Execute()
+                    
+                return new {procedureNamespace}{name}Result
+                {{
+                    {affectedRecordsParameters}
+                }};
+                ";
             }
 
 
-
+            var setParametersJoined = setParameters.Join("," + System.Environment.NewLine); 
             return $@"
             var reader = command.ExecuteReader();
-            {outputAssignment}
-            while (reader.Read())
-            {{
-                yield return new {result.SchemaName}.{result.Name}Result(reader);
-            }}
+            {setParametersJoined}
+
+            return new {procedureNamespace}.{name}Result
+                {{
+                    {setParametersJoined}
+                    Recordset = (from IDataRecord r in reader select new {procedureNamespace}.{name}Record  (r) )
+                }};
             ";
 
         }
@@ -161,13 +170,13 @@ namespace DataAccessLayerWriter
         {
 
             var executionResult = (result == null)
-                ? "int RecordsAffected {get;set;}" : $" public {result.SchemaName}.{result.Name} Recordset {{get;set;}}";
+                ? "int RecordsAffected {get;set;}" : $" public IEnumerable<{result.SchemaName}.{result.Name}Record> Recordset {{get;set;}}";
 
             var parameterResults = parameters.Where(p => p.IsOutput).Select(p => $"public {p.Type.Name} {p.Name} {{get;set;}}").Join(System.Environment.NewLine);
             return $@"
                     namespace {procedureNamespace}
                     {{
-                        public class {name}Result 
+                        public class {name}Result
                         {{
                             {executionResult}
                     
@@ -187,11 +196,11 @@ namespace DataAccessLayerWriter
 
             var codeParameters = parameters.Select(CreateParameterEntry).Join(System.Environment.NewLine);
 
-            var resultEntryCode = (result == null) ? String.Empty : CreateResultEntry(result, types);
+            var recordCode = (result == null) ? String.Empty : CreateRecord(result, types);
 
-            var executionResult = (result == null) ? "int" : $"IEnumerable<{result.SchemaName}.{result.Name}Result>";
+            var executionResult = $"{procedureNamespace}.{name}Result";
 
-            var executionCodeToCreateResult = BuildResultExecutionCode(result, "command", parameters);
+            var executionCodeToCreateResult = BuildResultExecutionCode(procedureNamespace, name, result, "command", parameters);
 
             var resultClass = CreateResultClass(procedureNamespace, name, result, parameters);
 
@@ -204,9 +213,10 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Dynamic;
 using System.Net.Configuration;
+using System.Linq;
 
 
-{resultEntryCode}
+{recordCode}
 
 {resultClass}
 
