@@ -17,7 +17,7 @@ namespace ExampleProjectForDataAccess
             {
                 connection.Open();
                 var proc = new dbo.SelectUserFirstName(connection);
-                var result = proc.Execute("867-5309", "");
+                var result = proc.Execute("867-5309", null);
 
                 Console.WriteLine(result.FirstName);
 

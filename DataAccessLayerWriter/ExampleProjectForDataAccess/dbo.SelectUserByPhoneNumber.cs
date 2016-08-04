@@ -74,17 +74,19 @@ namespace dbo
                         throw new ArgumentException("@PhoneNumber cannot be null");
                     }
                 
-            
-            var @PhoneNumberParameter = new SqlParameter
+            if(@PhoneNumber != null)
             {
-                 Value = @PhoneNumber,
-                ParameterName = "@PhoneNumber"
-                
-            };
-
-            command.Parameters.Add(@PhoneNumberParameter);
-
+                var @PhoneNumberParameter = new SqlParameter
+                {
+                     Value = @PhoneNumber,
+                    ParameterName = "@PhoneNumber"
                     
+                };
+                
+                command.Parameters.Add(@PhoneNumberParameter);
+            }
+            
+            
 
 
             

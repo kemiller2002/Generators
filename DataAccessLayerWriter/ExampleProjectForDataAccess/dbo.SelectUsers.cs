@@ -87,17 +87,19 @@ namespace dbo
                         throw new ArgumentException("@FirstName cannot be null");
                     }
                 
-            
-            var @FirstNameParameter = new SqlParameter
+            if(@FirstName != null)
             {
-                 Value = @FirstName,
-                ParameterName = "@FirstName"
-                
-            };
-
-            command.Parameters.Add(@FirstNameParameter);
-
+                var @FirstNameParameter = new SqlParameter
+                {
+                     Value = @FirstName,
+                    ParameterName = "@FirstName"
                     
+                };
+                
+                command.Parameters.Add(@FirstNameParameter);
+            }
+            
+            
 
 
             

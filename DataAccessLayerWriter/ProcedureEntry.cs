@@ -17,6 +17,18 @@ namespace DataAccessLayerWriter
 
             var setParameterDirection = (parameter.IsOutput) ? ", Direction = ParameterDirection.InputOutput " : "";
 
+            var forceSetParameter = (parameter.IsOutput) ? $@"else {{
+                    var parameter = new SqlParameter
+                {{
+                    ParameterName = ""{parameter.Name}""
+                    {setParameterDirection}
+                }};
+
+                command.Parameters.Add(parameter);
+                
+
+            }}" : ""  ;
+
             if (parameter.AllowsNull && !parameter.Type.IsClass)
             {
 
@@ -26,24 +38,21 @@ namespace DataAccessLayerWriter
             {{
                 var parameter = new SqlParameter
                 {{
-                    Value = {parameter
-                        .Name},
-                    ParameterName = ""{parameter
-                            .Name}""
+                    Value = {parameter.Name},
+                    ParameterName = ""{parameter.Name}""
                     {setParameterDirection}
                 }};
 
                 command.Parameters.Add(parameter);
                 
-            }}";
+            }}{forceSetParameter}";
             }
 
 
             var checkForNull = (parameter.Type.IsClass && !parameter.AllowsNull)
                 ? $@" if({parameter.Name} == null)
                     {{
-                        throw new ArgumentException(""{parameter
-                    .Name} cannot be null"");
+                        throw new ArgumentException(""{parameter.Name} cannot be null"");
                     }}
                 "
                 : "";
@@ -53,23 +62,23 @@ namespace DataAccessLayerWriter
                 $@"
 
             {checkForNull}
-            
-            var {parameter.Name}Parameter = new SqlParameter
+            if({parameter.Name} != null)
             {{
-                 Value = {parameter
-                    .Name},
-                ParameterName = ""{parameter
-                        .Name}""
-                {setParameterDirection}
-            }};
-
-            command.Parameters.Add({parameter.Name}Parameter);
-
-                    ";
-
-
-
+                var {parameter.Name}Parameter = new SqlParameter
+                {{
+                     Value = {parameter
+                        .Name},
+                    ParameterName = ""{parameter
+                            .Name}""
+                    {setParameterDirection}
+                }};
+                
+                command.Parameters.Add({parameter.Name}Parameter);
+            }}
+            {forceSetParameter}
+            ";
         }
+
 
         public static string ConvertToType(Field parameter)
         {

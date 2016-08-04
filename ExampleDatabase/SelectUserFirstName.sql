@@ -1,7 +1,7 @@
 ﻿CREATE PROCEDURE [dbo].[SelectUserFirstName]
 
 	@PhoneNumber PhoneNumber ,
-	@FirstName VARCHAR(10) OUTPUT
+	@FirstName VARCHAR(10) = NULL OUTPUT
 
 
 AS

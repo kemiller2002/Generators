@@ -175,7 +175,10 @@ namespace DataAccessLayerWriter
                              null;
 
             var isOuput = node.SelectSingleNode("d:Element/d:Property[@Name='IsOutput']", manager) !=
-                             null; ;
+                             null; 
+
+            ?
+            HERE->GetLength;
 
             return new Field
             {

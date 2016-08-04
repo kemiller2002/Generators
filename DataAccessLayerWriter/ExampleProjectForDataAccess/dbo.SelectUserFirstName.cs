@@ -47,52 +47,66 @@ namespace dbo
             };
 
 
-            
 
-             if(@PhoneNumber == null)
-                    {
-                        throw new ArgumentException("@PhoneNumber cannot be null");
-                    }
-                
-            
-            var @PhoneNumberParameter = new SqlParameter
+
+            if (@PhoneNumber == null)
             {
-                 Value = @PhoneNumber,
-                ParameterName = "@PhoneNumber"
-                
-            };
+                throw new ArgumentException("@PhoneNumber cannot be null");
+            }
 
-            command.Parameters.Add(@PhoneNumberParameter);
-
-                    
-
-
-             if(@FirstName == null)
-                    {
-                        throw new ArgumentException("@FirstName cannot be null");
-                    }
-                
-            
-            var @FirstNameParameter = new SqlParameter
+            if (@PhoneNumber != null)
             {
-                 Value = @FirstName,
-                ParameterName = "@FirstName"
-                , Direction = ParameterDirection.InputOutput 
-            };
+                var @PhoneNumberParameter = new SqlParameter
+                {
+                    Value = @PhoneNumber,
+                    ParameterName = "@PhoneNumber"
 
-            command.Parameters.Add(@FirstNameParameter);
+                };
 
-                    
+                command.Parameters.Add(@PhoneNumberParameter);
+            }
+
+
+
+
+
+            if (@FirstName != null)
+            {
+                var @FirstNameParameter = new SqlParameter
+                {
+                    Value = @FirstName,
+                    ParameterName = "@FirstName"
+                    ,
+                    Direction = ParameterDirection.InputOutput
+                };
+
+                command.Parameters.Add(@FirstNameParameter);
+            }
+            else
+            {
+                var parameter = new SqlParameter
+                {
+                    ParameterName = "@FirstName"
+                    ,
+                    DbType = DbType.String,
+                    Direction = ParameterDirection.InputOutput
+                };
+
+                command.Parameters.Add(parameter);
+
+
+            }
+
 
 
             var result = command.ExecuteNonQuery();
-                    
-                return new dbo.SelectUserFirstNameResult
-                {
-                    @FirstName = (String)command.Parameters["@FirstName"].Value,
-RecordsAffected = result
-                };
-                
+
+            return new dbo.SelectUserFirstNameResult
+            {
+                @FirstName = (String) command.Parameters["@FirstName"].Value,
+                RecordsAffected = result
+            };
+
         }
 
 
