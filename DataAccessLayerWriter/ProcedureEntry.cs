@@ -16,12 +16,17 @@ namespace DataAccessLayerWriter
         {
 
             var setParameterDirection = (parameter.IsOutput) ? ", Direction = ParameterDirection.InputOutput " : "";
+            var parameterSize = parameter.Length ?? parameter.Type.SqlDefaultSize;
+
+            var setParameterSize = (parameter.IsOutput) ? $", Size = {parameterSize}" : "";
+
 
             var forceSetParameter = (parameter.IsOutput) ? $@"else {{
                     var parameter = new SqlParameter
                 {{
                     ParameterName = ""{parameter.Name}""
                     {setParameterDirection}
+                    {setParameterSize}
                 }};
 
                 command.Parameters.Add(parameter);
@@ -229,7 +234,6 @@ namespace {procedureNamespace}
 
             {executionCodeToCreateResult}
         }}
-
 
     }}
 

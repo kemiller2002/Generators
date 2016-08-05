@@ -8,17 +8,15 @@ namespace DataAccessLayerWriter
 {
     public static class TypeExtensions
     {
-        public static DataType ToDataType(this Type t)
+        public static DataType ToDataType(this Type t, int sqlDefaultSize)
         {
             return new DataType
             {
                 Name = t.Name,
-                IsClass = t.IsClass
+                IsClass = t.IsClass,
+                SqlDefaultSize = sqlDefaultSize
             };
         }
-
-
-
 
     }
 }

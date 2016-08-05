@@ -12,5 +12,7 @@ namespace DataAccessLayerWriter
 
         public bool IsClass { get; set; }
 
+        public int SqlDefaultSize { get; set; }
+
     }
 }
