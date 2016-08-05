@@ -18,7 +18,7 @@ namespace ExampleProjectForDataAccess
                 connection.Open();
                 var proc = new dbo.SelectAsOutputParameters(connection);
 
-                var result = proc.Execute(null, null, null, null, null, null, null, null, null);
+                var result = proc.Execute(null, null, null, null, null, null, null, null, null, null, null, null);
 
 
 

@@ -8,6 +8,9 @@
 	, @DateTime DATETIME = NULL OUTPUT
 	, @DateTime2 DATETIME2(2) = NULL OUTPUT
 	, @SmallDateTime SMALLDATETIME = NULL OUTPUT
+	, @float FLOAT = NULL OUTPUT
+	, @numeric NUMERIC = NULL OUTPUT
+	, @real REAL = NULL OUTPUT
 
 AS
 
@@ -26,3 +29,8 @@ SET @DateTime = CAST ('10/10/2012' AS DATETIME)
 SET @DateTime2 = CAST ('10/10/2012' AS DATETIME2)
 
 SET @SmallDateTime = CAST ('10/10/2012' AS smalldatetime)
+
+SET @float = 1.0
+SET @numeric = 23.3
+SET @real = 32323.234234234
+

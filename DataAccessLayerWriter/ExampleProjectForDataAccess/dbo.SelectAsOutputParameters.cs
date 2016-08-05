@@ -27,6 +27,9 @@ public Byte @timyInt {get;set;}
 public DateTime @DateTime {get;set;}
 public DateTime @DateTime2 {get;set;}
 public DateTime @SmallDateTime {get;set;}
+public Double @float {get;set;}
+public Decimal @numeric {get;set;}
+public Single @real {get;set;}
                         }
 
                     }
@@ -45,7 +48,7 @@ namespace dbo
             _connection = connection;
         }
 
-        public dbo.SelectAsOutputParametersResult Execute(Int32? @Int, Guid? @Guid, String @VarChar, String @nVarchar, Int16? @smallInt, Byte? @timyInt, DateTime? @DateTime, DateTime? @DateTime2, DateTime? @SmallDateTime)
+        public dbo.SelectAsOutputParametersResult Execute(Int32? @Int, Guid? @Guid, String @VarChar, String @nVarchar, Int16? @smallInt, Byte? @timyInt, DateTime? @DateTime, DateTime? @DateTime2, DateTime? @SmallDateTime, Double? @float, Decimal? @numeric, Single? @real)
         {
             var command = new SqlCommand
             {
@@ -296,6 +299,84 @@ namespace dbo
 
             }
 
+            if (@float.HasValue)
+            {
+                var parameter = new SqlParameter
+                {
+                    Value = @float,
+                    ParameterName = "@float"
+                    , Direction = ParameterDirection.InputOutput 
+                    , SqlDbType =  SqlDbType.Float 
+                };
+
+                command.Parameters.Add(parameter);
+                
+            }else {
+                    var parameter = new SqlParameter
+                {
+                    ParameterName = "@float"
+                    , Direction = ParameterDirection.InputOutput 
+                    , Size = 8
+                    , SqlDbType =  SqlDbType.Float 
+                };
+
+                command.Parameters.Add(parameter);
+                
+
+            }
+
+            if (@numeric.HasValue)
+            {
+                var parameter = new SqlParameter
+                {
+                    Value = @numeric,
+                    ParameterName = "@numeric"
+                    , Direction = ParameterDirection.InputOutput 
+                    , SqlDbType =  SqlDbType.Decimal 
+                };
+
+                command.Parameters.Add(parameter);
+                
+            }else {
+                    var parameter = new SqlParameter
+                {
+                    ParameterName = "@numeric"
+                    , Direction = ParameterDirection.InputOutput 
+                    , Size = 17
+                    , SqlDbType =  SqlDbType.Decimal 
+                };
+
+                command.Parameters.Add(parameter);
+                
+
+            }
+
+            if (@real.HasValue)
+            {
+                var parameter = new SqlParameter
+                {
+                    Value = @real,
+                    ParameterName = "@real"
+                    , Direction = ParameterDirection.InputOutput 
+                    , SqlDbType =  SqlDbType.Real 
+                };
+
+                command.Parameters.Add(parameter);
+                
+            }else {
+                    var parameter = new SqlParameter
+                {
+                    ParameterName = "@real"
+                    , Direction = ParameterDirection.InputOutput 
+                    , Size = 4
+                    , SqlDbType =  SqlDbType.Real 
+                };
+
+                command.Parameters.Add(parameter);
+                
+
+            }
+
 
             var result = command.ExecuteNonQuery();
                     
@@ -310,6 +391,9 @@ namespace dbo
 @DateTime = (DateTime)command.Parameters["@DateTime"].Value,
 @DateTime2 = (DateTime)command.Parameters["@DateTime2"].Value,
 @SmallDateTime = (DateTime)command.Parameters["@SmallDateTime"].Value,
+@float = (Double)command.Parameters["@float"].Value,
+@numeric = (Decimal)command.Parameters["@numeric"].Value,
+@real = (Single)command.Parameters["@real"].Value,
 RecordsAffected = result
                 };
                 
