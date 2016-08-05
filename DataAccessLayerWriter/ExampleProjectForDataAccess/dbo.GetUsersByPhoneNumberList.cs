@@ -83,6 +83,7 @@ namespace dbo
                      Value = @PhoneNumbers,
                     ParameterName = "@PhoneNumbers"
                     
+                    , SqlDbType =  SqlDbType.BigInt 
                 };
                 
                 command.Parameters.Add(@PhoneNumbersParameter);

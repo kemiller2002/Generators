@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="dbo.GetUsersByPhoneNumberList.cs" />
     <Compile Include="dbo.PhoneNumbers.cs" />
+    <Compile Include="dbo.SelectAsOutputParameters.cs" />
     <Compile Include="dbo.SelectUserByPhoneNumber.cs" />
     <Compile Include="dbo.SelectUserFirstName.cs" />
     <Compile Include="dbo.SelectUsers.cs" />

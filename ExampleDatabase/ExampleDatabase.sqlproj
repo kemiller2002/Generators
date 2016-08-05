@@ -69,5 +69,6 @@
     <Build Include="PhoneNumbers.sql" />
     <Build Include="GetUsersByPhoneNumberList.sql" />
     <Build Include="SelectUserFirstName.sql" />
+    <Build Include="SelectAsOutputParameters.sql" />
   </ItemGroup>
 </Project>

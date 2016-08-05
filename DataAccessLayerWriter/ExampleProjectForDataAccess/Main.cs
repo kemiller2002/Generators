@@ -16,10 +16,11 @@ namespace ExampleProjectForDataAccess
             using (var connection = new SqlConnection("Data Source=localhost;Initial Catalog=ExampleDatabase;Integrated Security=SSPI"))
             {
                 connection.Open();
-                var proc = new dbo.SelectUserFirstName(connection);
-                var result = proc.Execute("867-5309", null);
+                var proc = new dbo.SelectAsOutputParameters(connection);
 
-                Console.WriteLine(result.FirstName);
+                var result = proc.Execute(null, null, null, null, null, null, null, null, null);
+
+
 
             }
 

@@ -18,8 +18,9 @@ namespace DataAccessLayerWriter
             var setParameterDirection = (parameter.IsOutput) ? ", Direction = ParameterDirection.InputOutput " : "";
             var parameterSize = parameter.Length ?? parameter.Type.SqlDefaultSize;
 
-            var setParameterSize = (parameter.IsOutput) ? $", Size = {parameterSize}" : "";
-
+            var setParameterSize = $", Size = {parameterSize}";
+            var setParameterType = $", SqlDbType =  SqlDbType.{parameter.Type.SqlDbType} ";
+        
 
             var forceSetParameter = (parameter.IsOutput) ? $@"else {{
                     var parameter = new SqlParameter
@@ -27,6 +28,7 @@ namespace DataAccessLayerWriter
                     ParameterName = ""{parameter.Name}""
                     {setParameterDirection}
                     {setParameterSize}
+                    {setParameterType}
                 }};
 
                 command.Parameters.Add(parameter);
@@ -46,6 +48,7 @@ namespace DataAccessLayerWriter
                     Value = {parameter.Name},
                     ParameterName = ""{parameter.Name}""
                     {setParameterDirection}
+                    {setParameterType}
                 }};
 
                 command.Parameters.Add(parameter);
@@ -73,9 +76,9 @@ namespace DataAccessLayerWriter
                 {{
                      Value = {parameter
                         .Name},
-                    ParameterName = ""{parameter
-                            .Name}""
+                    ParameterName = ""{parameter.Name}""
                     {setParameterDirection}
+                    {setParameterType}
                 }};
                 
                 command.Parameters.Add({parameter.Name}Parameter);

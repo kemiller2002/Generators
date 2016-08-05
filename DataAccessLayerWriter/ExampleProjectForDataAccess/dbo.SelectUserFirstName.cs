@@ -61,6 +61,7 @@ namespace dbo
                      Value = @PhoneNumber,
                     ParameterName = "@PhoneNumber"
                     
+                    , SqlDbType =  SqlDbType.VarChar 
                 };
                 
                 command.Parameters.Add(@PhoneNumberParameter);
@@ -77,6 +78,7 @@ namespace dbo
                      Value = @FirstName,
                     ParameterName = "@FirstName"
                     , Direction = ParameterDirection.InputOutput 
+                    , SqlDbType =  SqlDbType.VarChar 
                 };
                 
                 command.Parameters.Add(@FirstNameParameter);
@@ -87,6 +89,7 @@ namespace dbo
                     ParameterName = "@FirstName"
                     , Direction = ParameterDirection.InputOutput 
                     , Size = 10
+                    , SqlDbType =  SqlDbType.VarChar 
                 };
 
                 command.Parameters.Add(parameter);

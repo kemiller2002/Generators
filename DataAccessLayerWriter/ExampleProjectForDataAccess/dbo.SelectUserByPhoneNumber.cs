@@ -81,6 +81,7 @@ namespace dbo
                      Value = @PhoneNumber,
                     ParameterName = "@PhoneNumber"
                     
+                    , SqlDbType =  SqlDbType.VarChar 
                 };
                 
                 command.Parameters.Add(@PhoneNumberParameter);

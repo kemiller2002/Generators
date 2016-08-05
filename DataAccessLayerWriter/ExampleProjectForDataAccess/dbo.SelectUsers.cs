@@ -75,6 +75,7 @@ namespace dbo
                     Value = @Id,
                     ParameterName = "@Id"
                     
+                    , SqlDbType =  SqlDbType.Int 
                 };
 
                 command.Parameters.Add(parameter);
@@ -94,6 +95,7 @@ namespace dbo
                      Value = @FirstName,
                     ParameterName = "@FirstName"
                     
+                    , SqlDbType =  SqlDbType.VarChar 
                 };
                 
                 command.Parameters.Add(@FirstNameParameter);
