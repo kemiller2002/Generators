@@ -19,11 +19,34 @@ namespace DataAccessLayerWriter
         static void Main(string[] args)
         {
             var writer = new Writer();
-            writer.Write(
+
+           /* writer.Write(
                 @"C:\Repos\Generators\ExampleDatabase\bin\Debug\ExampleDatabase.dacpac",
                 @"C:\Repos\Generators\DataAccessLayerWriter\ExampleProjectForDataAccess\",
                 "Data Source=localhost;Initial Catalog=ExampleDatabase;Integrated Security=SSPI"
                 );
+                */
+                if(args.Length < 3)
+                {
+                    Console.WriteLine(@"
+The program requires 3 parameters.
+    1. Location of the compiled dacpac.
+    2. The output folder for the desired data access classes
+            The output folder location should have trailing \ at the end.
+
+            NOTE: These will not be automatically added to the visual studio project.
+    3.  The connection string to access the database where the dacpac has been deployed.
+             
+
+                    ");
+                    return;
+                }
+                        writer.Write(
+                args[0], 
+                args[1],
+                args[2]
+                );
+
         }
 
 
@@ -118,13 +141,19 @@ namespace DataAccessLayerWriter
                     document.SelectNodes("d:DataSchemaModel/d:Model/d:Element[@Type='SqlUserDefinedDataType']", manager)
                         .Cast<XmlNode>().Select(n => GetCustomType(n, manager, builtInDataTypes)).ToList();
 
+
+                //put all types together gradually to build up list for use.  
+                //tableTypes can have both built in an custom types, so they need to be 
+                //unioned first.
+                var customAndBuiltInTypes = builtInDataTypes.Union(customTypes);
+
                 var tableTypes =
                     document.SelectNodes("d:DataSchemaModel/d:Model/d:Element[@Type='SqlTableType']", manager)
-                        .Cast<XmlNode>().Select(selector: n => GetTableType(n, manager, customTypes)).ToList();
+                        .Cast<XmlNode>().Select(selector: n => GetTableType(n, manager, customAndBuiltInTypes)).ToList();
 
-
-                var allTypes = builtInDataTypes.Union(customTypes)
+                var allTypes = customAndBuiltInTypes
                     .Cast<IType>().Union(tableTypes).ToDictionary(x => x.Name);
+
 
                 var nodes = document.SelectNodes("d:DataSchemaModel/d:Model/d:Element", manager);
 
@@ -254,6 +283,12 @@ namespace DataAccessLayerWriter
             {
                 Name = "datetimeoffset",
                 Type = typeof(System.DateTimeOffset).ToDataType(10)
+            };
+
+            yield return new Field()
+            {
+                Name = "datetime",
+                Type = typeof (System.DateTime).ToDataType()
             };
 
             yield return new Field()
