@@ -276,7 +276,7 @@ The program requires 3 parameters.
             yield return new Field()
             {
                 Name = "datetime",
-                Type = typeof(System.DateTime).ToDataType(3, System.Data.SqlDbType.DateTime)
+                Type = typeof(System.DateTime).ToDataType(8, System.Data.SqlDbType.DateTime)
             };
 
 
@@ -292,11 +292,6 @@ The program requires 3 parameters.
                 Type = typeof(System.DateTimeOffset).ToDataType(10, System.Data.SqlDbType.DateTimeOffset)
             };
 
-            yield return new Field()
-            {
-                Name = "datetime",
-                Type = typeof (System.DateTime).ToDataType(8, System.Data.SqlDbType.DateTime)
-            };
 
             yield return new Field()
             {
