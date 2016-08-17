@@ -295,7 +295,7 @@ The program requires 3 parameters.
             yield return new Field()
             {
                 Name = "datetime",
-                Type = typeof (System.DateTime).ToDataType()
+                Type = typeof (System.DateTime).ToDataType(8, System.Data.SqlDbType.DateTime)
             };
 
             yield return new Field()
