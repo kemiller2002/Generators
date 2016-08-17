@@ -41,11 +41,11 @@ namespace DataAccessLayerWriter
 
                 return
                     $@"
-            if ({parameter.Name.ToLocalVariable()}.HasValue)
+            if ({parameter.Name.ToCamelCase()}.HasValue)
             {{
                 var parameter = new SqlParameter
                 {{
-                    Value = {parameter.Name.ToLocalVariable()},
+                    Value = {parameter.Name.ToCamelCase()},
                     ParameterName = ""{parameter.Name}""
                     {setParameterDirection}
                     {setParameterType}
@@ -58,7 +58,7 @@ namespace DataAccessLayerWriter
 
 
             var checkForNull = (parameter.Type.IsClass && !parameter.AllowsNull)
-                ? $@" if({parameter.Name.ToLocalVariable()} == null)
+                ? $@" if({parameter.Name.ToCamelCase()} == null)
                     {{
                         throw new ArgumentException(""{parameter.Name} cannot be null"");
                     }}
@@ -70,12 +70,12 @@ namespace DataAccessLayerWriter
                 $@"
 
             {checkForNull}
-            if({parameter.Name.ToLocalVariable()} != null)
+            if({parameter.Name.ToCamelCase()} != null)
             {{
                 var {parameter.Name}Parameter = new SqlParameter
                 {{
                      Value = {parameter
-                        .Name.ToLocalVariable()},
+                        .Name.ToCamelCase()},
                     ParameterName = ""{parameter.Name}""
                     {setParameterDirection}
                     {setParameterType}
@@ -91,7 +91,7 @@ namespace DataAccessLayerWriter
         public static string ConvertToType(Field parameter)
         {
             var outputType = (parameter.AllowsNull && !parameter.Type.IsClass) ? $"{parameter.Type.Name}?" : parameter.Type.Name;
-            return $"{outputType} {parameter.Name.ToLocalVariable()}";
+            return $"{outputType} {parameter.Name.ToCamelCase()}";
         }
 
         public static string CreateRecord(ProcedureResult result, Dictionary<string, IType> types)
@@ -125,11 +125,11 @@ namespace DataAccessLayerWriter
         public static string BuildResultExecutionCode(string procedureNamespace, string name, ProcedureResult result, string sqlCommandName, IEnumerable<Field> parameters)
         {
             var outputAssignment = parameters.Where(p => p.IsOutput)
-                .Select(p => $"{p.Name} = {p.Name}Parameter.Value;")
+                .Select(p => $"{p.Name.ToPascalCase()} = {p.Name}Parameter.Value;")
                 .Join(System.Environment.NewLine);
 
             var setParameters = parameters.Where(p => p.IsOutput)
-                .Select(p => $"{p.Name} = ({p.Type.Name}){sqlCommandName}.Parameters[\"{p.Name}\"].Value");
+                .Select(p => $"{p.Name.ToPascalCase()} = ({p.Type.Name}){sqlCommandName}.Parameters[\"{p.Name}\"].Value");
 
             if (result == null)
             {
@@ -167,7 +167,7 @@ namespace DataAccessLayerWriter
             var executionResult = (result == null)
                 ? "public int RecordsAffected {get;set;}" : $" public IEnumerable<{result.SchemaName}.{result.Name}Record> Recordset {{get;set;}}";
 
-            var parameterResults = parameters.Where(p => p.IsOutput).Select(p => $"public {p.Type.Name} {p.Name} {{get;set;}}").Join(System.Environment.NewLine);
+            var parameterResults = parameters.Where(p => p.IsOutput).Select(p => $"public {p.Type.Name} {p.Name.ToPascalCase()} {{get;set;}}").Join(System.Environment.NewLine);
             return $@"
                     namespace {procedureNamespace}
                     {{

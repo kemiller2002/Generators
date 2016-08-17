@@ -23,13 +23,12 @@ namespace DataAccessLayerWriter
                 ? word : word[0].ToString().ToLower() + word.Skip(1).Join("");
 
         static string FormatStatement (string item, Func<string,string> converter) => 
-            item.Split(new[] { '_', '_', '-', ' ' }, StringSplitOptions.None).Select(converter).Join(",");
+            item.Replace("@", "").Split(new[] { '_', '_', '-', ' ' }, StringSplitOptions.None).Select(converter).Join(",");
 
         public static string ToPascalCase(this string item) => FormatStatement(item, MakeWordPascal);
 
         public static string ToCamelCase (this string item) => FormatStatement(item, MakeWordCamel);
 
-        public static string ToLocalVariable(this string item) => item.Replace("@", "").ToCamelCase();
 
     }
 }
