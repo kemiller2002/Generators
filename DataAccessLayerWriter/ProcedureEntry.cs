@@ -41,11 +41,11 @@ namespace DataAccessLayerWriter
 
                 return
                     $@"
-            if ({parameter.Name}.HasValue)
+            if ({parameter.Name.ToLocalVariable()}.HasValue)
             {{
                 var parameter = new SqlParameter
                 {{
-                    Value = {parameter.Name},
+                    Value = {parameter.Name.ToLocalVariable()},
                     ParameterName = ""{parameter.Name}""
                     {setParameterDirection}
                     {setParameterType}
@@ -58,7 +58,7 @@ namespace DataAccessLayerWriter
 
 
             var checkForNull = (parameter.Type.IsClass && !parameter.AllowsNull)
-                ? $@" if({parameter.Name} == null)
+                ? $@" if({parameter.Name.ToLocalVariable()} == null)
                     {{
                         throw new ArgumentException(""{parameter.Name} cannot be null"");
                     }}
@@ -70,12 +70,12 @@ namespace DataAccessLayerWriter
                 $@"
 
             {checkForNull}
-            if({parameter.Name} != null)
+            if({parameter.Name.ToLocalVariable()} != null)
             {{
                 var {parameter.Name}Parameter = new SqlParameter
                 {{
                      Value = {parameter
-                        .Name},
+                        .Name.ToLocalVariable()},
                     ParameterName = ""{parameter.Name}""
                     {setParameterDirection}
                     {setParameterType}
@@ -91,14 +91,18 @@ namespace DataAccessLayerWriter
         public static string ConvertToType(Field parameter)
         {
             var outputType = (parameter.AllowsNull && !parameter.Type.IsClass) ? $"{parameter.Type.Name}?" : parameter.Type.Name;
-            return $"{outputType} {parameter.Name}";
+            return $"{outputType} {parameter.Name.ToLocalVariable()}";
         }
 
         public static string CreateRecord(ProcedureResult result, Dictionary<string, IType> types)
         {
 
-            var bindings = result.Columns.Select(c => $"{c.Name} = ({types[c.TypeName].Type.Name})reader[\"{c.Name}\"] ;").Join(System.Environment.NewLine);
-            var properties = result.Columns.Select(c => $"public {types[c.TypeName].Type.Name} {c.Name}{{get;set;}}").Join(System.Environment.NewLine);
+            var bindings = result.Columns.Select(c => $"{c.Name.ToPascalCase()} = ({types[c.TypeName].Type.Name})reader[\"{c.Name}\"] ;").Join(System.Environment.NewLine);
+
+            var properties = result
+                                .Columns
+                                .Select(c => $"public {types[c.TypeName].Type.Name} {c.Name.ToPascalCase()}{{get;set;}}")
+                                                .Join(System.Environment.NewLine);
 
             return $@"
                 namespace {result.SchemaName}
