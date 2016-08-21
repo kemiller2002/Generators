@@ -221,7 +221,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-
+using StructuredSight.Data;
 
 {recordCode}
 
@@ -230,24 +230,18 @@ using System.Linq;
 namespace {procedureNamespace}
 {{
 
-    public class {name}
+    public class {name} : StructuredSight.Data.BaseAccess<{name}Result>
     {{
 
-        readonly SqlConnection _connection;
-
-        public {name}(SqlConnection connection)
+        public {name}(SqlConnection connection) : base(connection)
         {{
-            _connection = connection;
         }}
 
         public {executionResult} Execute({parameterEntries})
         {{
-            var command = new SqlCommand
-            {{
-                Connection = _connection,
-                CommandText = ""[{procedureNamespace}].[{name}]"",
-                CommandType = CommandType.StoredProcedure
-            }};
+            var command = Connection.CreateCommand();
+            command.CommandText = ""[{procedureNamespace}].[{name}]"";
+            command.CommandType = CommandType.StoredProcedure;
 
 
             {codeParameters}

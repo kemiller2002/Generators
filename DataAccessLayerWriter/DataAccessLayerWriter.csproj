@@ -50,6 +50,7 @@
     <Compile Include="DataTypeEntry.cs" />
     <Compile Include="Entity.cs" />
     <Compile Include="Field.cs" />
+    <Compile Include="OutputHelpers.cs" />
     <Compile Include="ProcedureColumnEntry.cs" />
     <Compile Include="ProcedureEntry.cs" />
     <Compile Include="Program.cs" />

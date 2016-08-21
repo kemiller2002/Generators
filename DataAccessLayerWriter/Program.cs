@@ -20,20 +20,13 @@ namespace DataAccessLayerWriter
         {
             var writer = new Writer();
 
-            writer.Write(
-                @"K:\Generators\ExampleDatabase\bin\Debug\ExampleDatabase.dacpac",
-                @"K:\Generators\DataAccessLayerWriter\ExampleProjectForDataAccess\",
-                "Data Source=localhost;Initial Catalog=ExampleDatabase;Integrated Security=SSPI"
-                );
-                return;
-                
-                if(args.Length < 3)
+            if (args.Length < 3)
                 {
                     Console.WriteLine(@"
 The program requires 3 parameters.
     1. Location of the compiled dacpac.
     2. The output folder for the desired data access classes
-            The output folder location should have trailing \ at the end.
+            The output folder location should not have trailing a trailing backslash (\) at the end.
 
             NOTE: These will not be automatically added to the visual studio project.
     3.  The connection string to access the database where the dacpac has been deployed.
@@ -121,8 +114,10 @@ The program requires 3 parameters.
         }
 
 
-        public bool Write(string inputFile, string outputFolder, string connectionString)
+        public bool Write(string inputFile, string outputFolderMinusSlash, string connectionString)
         {
+            var outputFolder = outputFolderMinusSlash + "\\";
+
             var archive = ZipFile.Open(inputFile, System.IO.Compression.ZipArchiveMode.Read);
 
             using (var stream = archive.Entries.First(x => x.Name.Equals("model.xml")).Open())
@@ -162,9 +157,19 @@ The program requires 3 parameters.
                     .Where(n => n.Attributes["Type"].Value.Equals("SqlProcedure"))
                     .Select(n => ParseProcedure(n, manager, allTypes, connection)).ToList();
 
+                var supplementCode = new List<Tuple<string, string, string>> 
+                {
+                    new Tuple<string, string, string>("StructuredSight.Data", "IDatabase",
+                        OutputHelpers.IDatabaseConnectionCode),
+                    new Tuple<string, string, string>("StructuredSight.Data", "BaseClass",
+                        OutputHelpers.BaseClass)
 
-                procedures
-                    .ForEach(i => File.WriteAllText($"{outputFolder}{i.Item1}.{i.Item2}.cs", i.Item3));
+
+                };
+
+                procedures.Union(supplementCode)
+                     .ToList()
+                     .ForEach(i => File.WriteAllText($"{outputFolder}{i.Item1}.{i.Item2}.cs", i.Item3));
 
                 tableTypes.Select(t => DataTypeEntry.Create(t.Name, t.Fields))
                     .ToList()
