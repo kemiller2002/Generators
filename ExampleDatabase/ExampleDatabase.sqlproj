@@ -71,4 +71,5 @@
     <Build Include="SelectUserFirstName.sql" />
     <Build Include="SelectAsOutputParameters.sql" />
   </ItemGroup>
+
 </Project>

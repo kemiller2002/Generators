@@ -20,12 +20,13 @@ namespace DataAccessLayerWriter
         {
             var writer = new Writer();
 
-           /* writer.Write(
-                @"C:\Repos\Generators\ExampleDatabase\bin\Debug\ExampleDatabase.dacpac",
-                @"C:\Repos\Generators\DataAccessLayerWriter\ExampleProjectForDataAccess\",
+            writer.Write(
+                @"K:\Generators\ExampleDatabase\bin\Debug\ExampleDatabase.dacpac",
+                @"K:\Generators\DataAccessLayerWriter\ExampleProjectForDataAccess\",
                 "Data Source=localhost;Initial Catalog=ExampleDatabase;Integrated Security=SSPI"
                 );
-                */
+                return;
+                
                 if(args.Length < 3)
                 {
                     Console.WriteLine(@"
@@ -290,6 +291,7 @@ The program requires 3 parameters.
             {
                 Name = "datetimeoffset",
                 Type = typeof(System.DateTimeOffset).ToDataType(10, System.Data.SqlDbType.DateTimeOffset)
+
             };
 
 

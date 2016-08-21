@@ -103,10 +103,26 @@ namespace DataAccessLayerWriter
                                 .Columns
                                 .Select(c => $"public {types[c.TypeName].Type.Name} {c.Name.ToPascalCase()}{{get;set;}}")
                                                 .Join(System.Environment.NewLine);
+            var duplicateColumns =
+                result.Columns.GroupBy(x => x.Name)
+                    .Select(x => new {Key = x.Key, Count = x.Count()})
+                    .Where(x => x.Count > 1).ToArray();
+
+            var notes = (duplicateColumns.Any()) ? $@"
+                    /*
+                        The following columns have duplicate entries.  
+                        You'll need to either alias a column or remove the duplicate name in the query.
+                        
+                        {duplicateColumns.Select(x=>x.Key).Join(", ")}
+
+                    */
+            " : "";
+
 
             return $@"
                 namespace {result.SchemaName}
                 {{
+                    {notes}
                     public class {result.Name}Record
                     {{
                         public {result.Name}Record (IDataRecord reader)
@@ -204,8 +220,6 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Dynamic;
-using System.Net.Configuration;
 using System.Linq;
 
 
