@@ -90,7 +90,9 @@ namespace DataAccessLayerWriter
 
         public static string ConvertToType(Field parameter)
         {
-            var outputType = (parameter.AllowsNull && !parameter.Type.IsClass) ? $"{parameter.Type.Name}?" : parameter.Type.Name;
+            var outputType = (parameter.AllowsNull && !parameter.Type.IsClass) ? 
+                    $"{parameter.Type.Name}?" : parameter.Type.Name;
+
             return $"{outputType} {parameter.Name.ToCamelCase()}";
         }
 
@@ -199,7 +201,8 @@ namespace DataAccessLayerWriter
         }
 
         
-        public static string Create(string procedureNamespace, string name, IEnumerable<Field> parameters, ProcedureResult result, Dictionary<string, IType> types)
+        public static string Create(string procedureNamespace, string name, IEnumerable<Field> parameters, 
+                ProcedureResult result, Dictionary<string, IType> types)
         {
             var parameterEntries = parameters.Select(ConvertToType).Join(", ");
 
@@ -209,7 +212,8 @@ namespace DataAccessLayerWriter
 
             var executionResult = $"{procedureNamespace}.{name}Result";
 
-            var executionCodeToCreateResult = BuildResultExecutionCode(procedureNamespace, name, result, "command", parameters);
+            var executionCodeToCreateResult = 
+                BuildResultExecutionCode(procedureNamespace, name, result, "command", parameters);
 
             var resultClass = CreateResultClass(procedureNamespace, name, result, parameters);
 

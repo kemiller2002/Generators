@@ -43,15 +43,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="dbo.GetUsersByPhoneNumberList.cs" />
     <Compile Include="dbo.PhoneNumbers.cs" />
     <Compile Include="dbo.SelectAsOutputParameters.cs" />
     <Compile Include="dbo.SelectUserByPhoneNumber.cs" />
-    <Compile Include="dbo.SelectUserFirstName.cs" />
-    <Compile Include="dbo.SelectUsers.cs" />
     <Compile Include="Main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-
 </Project>

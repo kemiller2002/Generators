@@ -78,7 +78,10 @@ The program requires 3 parameters.
 
 
 
-            var typeName = (node.SelectSingleNode("d:Relationship[@Name='TypeSpecifier']/d:Entry/d:Element/d:Relationship/d:Entry/d:References", manager))
+            var typeName = (
+                    node
+                    .SelectSingleNode
+                        ("d:Relationship[@Name='TypeSpecifier']/d:Entry/d:Element/d:Relationship/d:Entry/d:References", manager))
                 .Attributes["Name"].Value.RemoveSquareBrackets();
 
             var name = node.Attributes["Name"].Value;
@@ -104,11 +107,15 @@ The program requires 3 parameters.
             var columns = node.SelectNodes("d:Relationship/d:Entry/d:Element", manager)
                 .Cast<XmlNode>().Select(n => GetCustomFieldType(n, manager, customTypes)).ToList();
 
+
+            //putting ienumerable around name, because the table type is a collection of this object
+            //when other code uses this entity, it won't have to know to explicity convert it to an 
+            //enumeration. 
             return new Entity
             {
                 Name = name,
                 Fields = columns,
-                Type = new DataType { Name = name, IsClass = true }
+                Type = new DataType { Name = $"IEnumerable<{name}>", IsClass = true }
             };
 
         }
@@ -145,10 +152,13 @@ The program requires 3 parameters.
 
                 var tableTypes =
                     document.SelectNodes("d:DataSchemaModel/d:Model/d:Element[@Type='SqlTableType']", manager)
-                        .Cast<XmlNode>().Select(selector: n => GetTableType(n, manager, customAndBuiltInTypes)).ToList();
+                        .Cast<XmlNode>()
+                        .Select(selector: n => GetTableType(n, manager, customAndBuiltInTypes))
+                        .ToList();
 
                 var allTypes = customAndBuiltInTypes
-                    .Cast<IType>().Union(tableTypes).ToDictionary(x => x.Name);
+                    .Cast<IType>()
+                    .Union(tableTypes).ToDictionary(x => x.Name);
 
 
                 var nodes = document.SelectNodes("d:DataSchemaModel/d:Model/d:Element", manager);
@@ -216,7 +226,8 @@ The program requires 3 parameters.
             int parameterLengthValue; 
 
             int? parameterLength = 
-                (int.TryParse(node.SelectSingleNode("d:Element/d:Relationship/d:Entry/d:Element/d:Property[@Name='Length']", manager)?
+                (int.TryParse(node.SelectSingleNode("d:Element/d:Relationship/d:Entry/d:Element/d:Property[@Name='Length']",
+                    manager)?
                     .Attributes["Value"].Value, out parameterLengthValue)) ? (int?)parameterLengthValue : null;
 
             return new Field
@@ -229,7 +240,8 @@ The program requires 3 parameters.
             };
         }
 
-        public Tuple<string, string, string> ParseProcedure(XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types, SqlConnection connection)
+        public Tuple<string, string, string> ParseProcedure
+            (XmlNode node, XmlNamespaceManager manager, Dictionary<string,IType> types, SqlConnection connection)
         {
             var nameAttributeValue = node.Attributes["Name"].Value;
             var nameAttributeValueParts = nameAttributeValue.Split('.');
