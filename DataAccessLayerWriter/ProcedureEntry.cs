@@ -99,7 +99,8 @@ namespace DataAccessLayerWriter
         public static string CreateRecord(ProcedureResult result, Dictionary<string, IType> types)
         {
 
-            var bindings = result.Columns.Select(c => $"{c.Name.ToPascalCase()} = ({types[c.TypeName].Type.Name})reader[\"{c.Name}\"] ;").Join(System.Environment.NewLine);
+            var bindings = result.Columns.Select(c => $"{c.Name.ToPascalCase()} = (reader[\"{c.Name}\"] is DBNull) ? default({types[c.TypeName].Type.Name}) : ({types[c.TypeName].Type.Name})reader[\"{c.Name}\"] ;").
+                Join(System.Environment.NewLine);
 
             var properties = result
                                 .Columns
