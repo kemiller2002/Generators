@@ -1,24 +1,24 @@
 
+
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Dynamic;
-using System.Net.Configuration;
 using System.Linq;
-
+using StructuredSight.Data;
 
 
                 namespace dbo
                 {
+                    
                     public class SelectUserByPhoneNumberRecord
                     {
                         public SelectUserByPhoneNumberRecord (IDataRecord reader)
                         {
-                            EmailAddress = (String)reader["EmailAddress"] ;
-FirstName = (String)reader["FirstName"] ;
-Id = (Int32)reader["Id"] ;
-LastName = (String)reader["LastName"] ;
+                            EmailAddress = (reader["EmailAddress"] is DBNull) ? default(String) : (String)reader["EmailAddress"] ;
+FirstName = (reader["FirstName"] is DBNull) ? default(String) : (String)reader["FirstName"] ;
+Id = (reader["Id"] is DBNull) ? default(Int32) : (Int32)reader["Id"] ;
+LastName = (reader["LastName"] is DBNull) ? default(String) : (String)reader["LastName"] ;
                         }
 
                         public String EmailAddress{get;set;}
@@ -46,38 +46,37 @@ public String LastName{get;set;}
 namespace dbo
 {
 
-    public class SelectUserByPhoneNumber
+    public class SelectUserByPhoneNumberExecutionObject 
+    {
+        String PhoneNumber {get;set;}    
+    }
+
+    public class SelectUserByPhoneNumber : StructuredSight.Data.BaseAccess<SelectUserByPhoneNumberResult>
     {
 
-        readonly SqlConnection _connection;
-
-        public SelectUserByPhoneNumber(SqlConnection connection)
+        public SelectUserByPhoneNumber(SqlConnection connection) : base(connection)
         {
-            _connection = connection;
         }
 
-        public dbo.SelectUserByPhoneNumberResult Execute(String @PhoneNumber)
+        public dbo.SelectUserByPhoneNumberResult Execute(String phoneNumber)
         {
-            var command = new SqlCommand
-            {
-                Connection = _connection,
-                CommandText = "[dbo].[SelectUserByPhoneNumber]",
-                CommandType = CommandType.StoredProcedure
-            };
+            var command = Connection.CreateCommand();
+            command.CommandText = "[dbo].[SelectUserByPhoneNumber]";
+            command.CommandType = CommandType.StoredProcedure;
 
 
             
 
-             if(@PhoneNumber == null)
+             if(phoneNumber == null)
                     {
                         throw new ArgumentException("@PhoneNumber cannot be null");
                     }
                 
-            if(@PhoneNumber != null)
+            if(phoneNumber != null)
             {
                 var @PhoneNumberParameter = new SqlParameter
                 {
-                     Value = @PhoneNumber,
+                     Value = phoneNumber,
                     ParameterName = "@PhoneNumber"
                     
                     , SqlDbType =  SqlDbType.VarChar 
@@ -101,6 +100,14 @@ namespace dbo
             
         }
 
+        public dbo.SelectUserByPhoneNumberResult ExecuteWithExecutionObject(SelectUserByPhoneNumberExecutionObject input)
+        {
+            
+            return Execute(phoneNumber : input.PhoneNumber);
+        
+        }
+
     }
 
 }
+
